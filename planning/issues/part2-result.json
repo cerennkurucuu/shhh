@@ -1,0 +1,588 @@
+{
+    "repository":  "cerennkurucuu/shhh",
+    "status":  "verified",
+    "updatedUtc":  "2026-11-16T17:45:00.2181774Z",
+    "currentOperation":  "final verification of 8 OPEN Epics and 48 OPEN child issues",
+    "error":  "",
+    "completedOperations":  [
+                                "Preflight verified all part 1 mappings and acyclic 48-node dependency graph; known issues: 32",
+                                "Created SHHH-025 #33 https://github.com/cerennkurucuu/shhh/issues/33",
+                                "Created SHHH-026 #34 https://github.com/cerennkurucuu/shhh/issues/34",
+                                "Created SHHH-027 #35 https://github.com/cerennkurucuu/shhh/issues/35",
+                                "Created SHHH-028 #36 https://github.com/cerennkurucuu/shhh/issues/36",
+                                "Created SHHH-029 #37 https://github.com/cerennkurucuu/shhh/issues/37",
+                                "Created SHHH-030 #38 https://github.com/cerennkurucuu/shhh/issues/38",
+                                "Created SHHH-031 #39 https://github.com/cerennkurucuu/shhh/issues/39",
+                                "Created SHHH-032 #40 https://github.com/cerennkurucuu/shhh/issues/40",
+                                "Created SHHH-033 #41 https://github.com/cerennkurucuu/shhh/issues/41",
+                                "Created SHHH-034 #42 https://github.com/cerennkurucuu/shhh/issues/42",
+                                "Created SHHH-035 #43 https://github.com/cerennkurucuu/shhh/issues/43",
+                                "Created SHHH-036 #44 https://github.com/cerennkurucuu/shhh/issues/44",
+                                "Created SHHH-037 #45 https://github.com/cerennkurucuu/shhh/issues/45",
+                                "Created SHHH-038 #46 https://github.com/cerennkurucuu/shhh/issues/46",
+                                "Created SHHH-039 #47 https://github.com/cerennkurucuu/shhh/issues/47",
+                                "Created SHHH-040 #48 https://github.com/cerennkurucuu/shhh/issues/48",
+                                "Created SHHH-041 #49 https://github.com/cerennkurucuu/shhh/issues/49",
+                                "Created SHHH-042 #50 https://github.com/cerennkurucuu/shhh/issues/50",
+                                "Created SHHH-043 #51 https://github.com/cerennkurucuu/shhh/issues/51",
+                                "Created SHHH-044 #52 https://github.com/cerennkurucuu/shhh/issues/52",
+                                "Created SHHH-045 #53 https://github.com/cerennkurucuu/shhh/issues/53",
+                                "Created SHHH-046 #54 https://github.com/cerennkurucuu/shhh/issues/54",
+                                "Created SHHH-047 #55 https://github.com/cerennkurucuu/shhh/issues/55",
+                                "Created SHHH-048 #56 https://github.com/cerennkurucuu/shhh/issues/56",
+                                "Linked/checked SHHH-025 #33",
+                                "Linked/checked SHHH-026 #34",
+                                "Linked/checked SHHH-027 #35",
+                                "Linked/checked SHHH-028 #36",
+                                "Linked/checked SHHH-029 #37",
+                                "Linked/checked SHHH-030 #38",
+                                "Linked/checked SHHH-031 #39",
+                                "Linked/checked SHHH-032 #40",
+                                "Linked/checked SHHH-033 #41",
+                                "Linked/checked SHHH-034 #42",
+                                "Linked/checked SHHH-035 #43",
+                                "Linked/checked SHHH-036 #44",
+                                "Linked/checked SHHH-037 #45",
+                                "Linked/checked SHHH-038 #46",
+                                "Linked/checked SHHH-039 #47",
+                                "Linked/checked SHHH-040 #48",
+                                "Linked/checked SHHH-041 #49",
+                                "Linked/checked SHHH-042 #50",
+                                "Linked/checked SHHH-043 #51",
+                                "Linked/checked SHHH-044 #52",
+                                "Linked/checked SHHH-045 #53",
+                                "Linked/checked SHHH-046 #54",
+                                "Linked/checked SHHH-047 #55",
+                                "Linked/checked SHHH-048 #56",
+                                "Updated Epic child links EPIC-04 #5",
+                                "Updated Epic child links EPIC-05 #6",
+                                "Updated Epic child links EPIC-06 #7",
+                                "Updated Epic child links EPIC-07 #8",
+                                "Verified 8 OPEN Epics + 48 OPEN child issues, bidirectional Epic links and all 48 dependency nodes."
+                            ],
+    "issues":  [
+                   {
+                       "code":  "EPIC-00",
+                       "number":  1,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/1"
+                   },
+                   {
+                       "code":  "EPIC-01",
+                       "number":  2,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/2"
+                   },
+                   {
+                       "code":  "EPIC-02",
+                       "number":  3,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/3"
+                   },
+                   {
+                       "code":  "EPIC-03",
+                       "number":  4,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/4"
+                   },
+                   {
+                       "code":  "EPIC-04",
+                       "number":  5,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/5"
+                   },
+                   {
+                       "code":  "EPIC-05",
+                       "number":  6,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/6"
+                   },
+                   {
+                       "code":  "EPIC-06",
+                       "number":  7,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/7"
+                   },
+                   {
+                       "code":  "EPIC-07",
+                       "number":  8,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/8"
+                   },
+                   {
+                       "code":  "SHHH-001",
+                       "number":  9,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/9"
+                   },
+                   {
+                       "code":  "SHHH-002",
+                       "number":  10,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/10"
+                   },
+                   {
+                       "code":  "SHHH-003",
+                       "number":  11,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/11"
+                   },
+                   {
+                       "code":  "SHHH-004",
+                       "number":  12,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/12"
+                   },
+                   {
+                       "code":  "SHHH-005",
+                       "number":  13,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/13"
+                   },
+                   {
+                       "code":  "SHHH-006",
+                       "number":  14,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/14"
+                   },
+                   {
+                       "code":  "SHHH-007",
+                       "number":  15,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/15"
+                   },
+                   {
+                       "code":  "SHHH-008",
+                       "number":  16,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/16"
+                   },
+                   {
+                       "code":  "SHHH-009",
+                       "number":  17,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/17"
+                   },
+                   {
+                       "code":  "SHHH-010",
+                       "number":  18,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/18"
+                   },
+                   {
+                       "code":  "SHHH-011",
+                       "number":  19,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/19"
+                   },
+                   {
+                       "code":  "SHHH-012",
+                       "number":  20,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/20"
+                   },
+                   {
+                       "code":  "SHHH-013",
+                       "number":  21,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/21"
+                   },
+                   {
+                       "code":  "SHHH-014",
+                       "number":  22,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/22"
+                   },
+                   {
+                       "code":  "SHHH-015",
+                       "number":  23,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/23"
+                   },
+                   {
+                       "code":  "SHHH-016",
+                       "number":  24,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/24"
+                   },
+                   {
+                       "code":  "SHHH-017",
+                       "number":  25,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/25"
+                   },
+                   {
+                       "code":  "SHHH-018",
+                       "number":  26,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/26"
+                   },
+                   {
+                       "code":  "SHHH-019",
+                       "number":  27,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/27"
+                   },
+                   {
+                       "code":  "SHHH-020",
+                       "number":  28,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/28"
+                   },
+                   {
+                       "code":  "SHHH-021",
+                       "number":  29,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/29"
+                   },
+                   {
+                       "code":  "SHHH-022",
+                       "number":  30,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/30"
+                   },
+                   {
+                       "code":  "SHHH-023",
+                       "number":  31,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/31"
+                   },
+                   {
+                       "code":  "SHHH-024",
+                       "number":  32,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/32"
+                   },
+                   {
+                       "code":  "SHHH-025",
+                       "number":  33,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/33"
+                   },
+                   {
+                       "code":  "SHHH-026",
+                       "number":  34,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/34"
+                   },
+                   {
+                       "code":  "SHHH-027",
+                       "number":  35,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/35"
+                   },
+                   {
+                       "code":  "SHHH-028",
+                       "number":  36,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/36"
+                   },
+                   {
+                       "code":  "SHHH-029",
+                       "number":  37,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/37"
+                   },
+                   {
+                       "code":  "SHHH-030",
+                       "number":  38,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/38"
+                   },
+                   {
+                       "code":  "SHHH-031",
+                       "number":  39,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/39"
+                   },
+                   {
+                       "code":  "SHHH-032",
+                       "number":  40,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/40"
+                   },
+                   {
+                       "code":  "SHHH-033",
+                       "number":  41,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/41"
+                   },
+                   {
+                       "code":  "SHHH-034",
+                       "number":  42,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/42"
+                   },
+                   {
+                       "code":  "SHHH-035",
+                       "number":  43,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/43"
+                   },
+                   {
+                       "code":  "SHHH-036",
+                       "number":  44,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/44"
+                   },
+                   {
+                       "code":  "SHHH-037",
+                       "number":  45,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/45"
+                   },
+                   {
+                       "code":  "SHHH-038",
+                       "number":  46,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/46"
+                   },
+                   {
+                       "code":  "SHHH-039",
+                       "number":  47,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/47"
+                   },
+                   {
+                       "code":  "SHHH-040",
+                       "number":  48,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/48"
+                   },
+                   {
+                       "code":  "SHHH-041",
+                       "number":  49,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/49"
+                   },
+                   {
+                       "code":  "SHHH-042",
+                       "number":  50,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/50"
+                   },
+                   {
+                       "code":  "SHHH-043",
+                       "number":  51,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/51"
+                   },
+                   {
+                       "code":  "SHHH-044",
+                       "number":  52,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/52"
+                   },
+                   {
+                       "code":  "SHHH-045",
+                       "number":  53,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/53"
+                   },
+                   {
+                       "code":  "SHHH-046",
+                       "number":  54,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/54"
+                   },
+                   {
+                       "code":  "SHHH-047",
+                       "number":  55,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/55"
+                   },
+                   {
+                       "code":  "SHHH-048",
+                       "number":  56,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/56"
+                   }
+               ],
+    "dependencyGraph":  {
+                            "SHHH-034":  [
+                                             "SHHH-023",
+                                             "SHHH-026",
+                                             "SHHH-031"
+                                         ],
+                            "SHHH-025":  [
+                                             "SHHH-007",
+                                             "SHHH-010",
+                                             "SHHH-011"
+                                         ],
+                            "SHHH-007":  [
+                                             "SHHH-006"
+                                         ],
+                            "SHHH-014":  [
+                                             "SHHH-013"
+                                         ],
+                            "SHHH-029":  [
+                                             "SHHH-017",
+                                             "SHHH-021",
+                                             "SHHH-026",
+                                             "SHHH-027"
+                                         ],
+                            "SHHH-016":  [
+                                             "SHHH-015"
+                                         ],
+                            "SHHH-004":  [
+                                             "SHHH-002"
+                                         ],
+                            "SHHH-028":  [
+                                             "SHHH-010",
+                                             "SHHH-011",
+                                             "SHHH-027"
+                                         ],
+                            "SHHH-006":  [
+                                             "SHHH-001",
+                                             "SHHH-002",
+                                             "SHHH-003",
+                                             "SHHH-004",
+                                             "SHHH-005"
+                                         ],
+                            "SHHH-046":  [
+                                             "SHHH-004",
+                                             "SHHH-017",
+                                             "SHHH-021",
+                                             "SHHH-029",
+                                             "SHHH-044"
+                                         ],
+                            "SHHH-005":  [
+                                             "SHHH-002"
+                                         ],
+                            "SHHH-030":  [
+                                             "SHHH-025",
+                                             "SHHH-026",
+                                             "SHHH-029"
+                                         ],
+                            "SHHH-001":  [
+
+                                         ],
+                            "SHHH-023":  [
+                                             "SHHH-016",
+                                             "SHHH-021",
+                                             "SHHH-022"
+                                         ],
+                            "SHHH-040":  [
+                                             "SHHH-030",
+                                             "SHHH-037",
+                                             "SHHH-038",
+                                             "SHHH-039"
+                                         ],
+                            "SHHH-042":  [
+                                             "SHHH-002",
+                                             "SHHH-019",
+                                             "SHHH-020",
+                                             "SHHH-038"
+                                         ],
+                            "SHHH-020":  [
+                                             "SHHH-019"
+                                         ],
+                            "SHHH-047":  [
+                                             "SHHH-031",
+                                             "SHHH-034",
+                                             "SHHH-036",
+                                             "SHHH-038",
+                                             "SHHH-044"
+                                         ],
+                            "SHHH-010":  [
+                                             "SHHH-009"
+                                         ],
+                            "SHHH-039":  [
+                                             "SHHH-013",
+                                             "SHHH-014",
+                                             "SHHH-015",
+                                             "SHHH-017",
+                                             "SHHH-037"
+                                         ],
+                            "SHHH-003":  [
+                                             "SHHH-002"
+                                         ],
+                            "SHHH-038":  [
+                                             "SHHH-007",
+                                             "SHHH-008",
+                                             "SHHH-020",
+                                             "SHHH-037"
+                                         ],
+                            "SHHH-018":  [
+                                             "SHHH-004",
+                                             "SHHH-016"
+                                         ],
+                            "SHHH-033":  [
+                                             "SHHH-020",
+                                             "SHHH-021",
+                                             "SHHH-027",
+                                             "SHHH-029",
+                                             "SHHH-031"
+                                         ],
+                            "SHHH-009":  [
+                                             "SHHH-003",
+                                             "SHHH-006",
+                                             "SHHH-008"
+                                         ],
+                            "SHHH-019":  [
+                                             "SHHH-004",
+                                             "SHHH-006"
+                                         ],
+                            "SHHH-022":  [
+                                             "SHHH-021"
+                                         ],
+                            "SHHH-041":  [
+                                             "SHHH-030",
+                                             "SHHH-036",
+                                             "SHHH-037",
+                                             "SHHH-040"
+                                         ],
+                            "SHHH-031":  [
+                                             "SHHH-007"
+                                         ],
+                            "SHHH-021":  [
+                                             "SHHH-011",
+                                             "SHHH-017",
+                                             "SHHH-020"
+                                         ],
+                            "SHHH-048":  [
+                                             "SHHH-006",
+                                             "SHHH-024",
+                                             "SHHH-040",
+                                             "SHHH-041",
+                                             "SHHH-042",
+                                             "SHHH-043",
+                                             "SHHH-044",
+                                             "SHHH-045",
+                                             "SHHH-046",
+                                             "SHHH-047"
+                                         ],
+                            "SHHH-002":  [
+                                             "SHHH-001"
+                                         ],
+                            "SHHH-037":  [
+                                             "SHHH-003",
+                                             "SHHH-006",
+                                             "SHHH-009",
+                                             "SHHH-010",
+                                             "SHHH-011"
+                                         ],
+                            "SHHH-011":  [
+                                             "SHHH-010"
+                                         ],
+                            "SHHH-044":  [
+                                             "SHHH-028",
+                                             "SHHH-030",
+                                             "SHHH-035",
+                                             "SHHH-040",
+                                             "SHHH-043"
+                                         ],
+                            "SHHH-026":  [
+                                             "SHHH-023",
+                                             "SHHH-025"
+                                         ],
+                            "SHHH-013":  [
+                                             "SHHH-005",
+                                             "SHHH-012"
+                                         ],
+                            "SHHH-032":  [
+                                             "SHHH-012",
+                                             "SHHH-013",
+                                             "SHHH-014",
+                                             "SHHH-028",
+                                             "SHHH-031"
+                                         ],
+                            "SHHH-008":  [
+                                             "SHHH-007"
+                                         ],
+                            "SHHH-024":  [
+                                             "SHHH-018",
+                                             "SHHH-023"
+                                         ],
+                            "SHHH-015":  [
+                                             "SHHH-014"
+                                         ],
+                            "SHHH-035":  [
+                                             "SHHH-028",
+                                             "SHHH-029",
+                                             "SHHH-030",
+                                             "SHHH-032",
+                                             "SHHH-033",
+                                             "SHHH-034"
+                                         ],
+                            "SHHH-045":  [
+                                             "SHHH-003",
+                                             "SHHH-008",
+                                             "SHHH-009",
+                                             "SHHH-010",
+                                             "SHHH-028",
+                                             "SHHH-037",
+                                             "SHHH-038",
+                                             "SHHH-044"
+                                         ],
+                            "SHHH-043":  [
+                                             "SHHH-018",
+                                             "SHHH-024",
+                                             "SHHH-026",
+                                             "SHHH-027",
+                                             "SHHH-029",
+                                             "SHHH-030"
+                                         ],
+                            "SHHH-017":  [
+                                             "SHHH-015",
+                                             "SHHH-016"
+                                         ],
+                            "SHHH-036":  [
+                                             "SHHH-001",
+                                             "SHHH-031"
+                                         ],
+                            "SHHH-027":  [
+                                             "SHHH-011",
+                                             "SHHH-021",
+                                             "SHHH-025",
+                                             "SHHH-026"
+                                         ],
+                            "SHHH-012":  [
+                                             "SHHH-007"
+                                         ]
+                        }
+}

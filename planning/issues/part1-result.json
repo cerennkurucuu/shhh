@@ -1,0 +1,257 @@
+{
+    "repository":  "cerennkurucuu/shhh",
+    "status":  "verified",
+    "updatedUtc":  "2026-11-16T17:33:33.3658763Z",
+    "currentOperation":  "final server-side verification",
+    "error":  "",
+    "completedOperations":  [
+                                "Preflight complete; existing planned issues: 0",
+                                "Created label type:epic",
+                                "Created label type:documentation",
+                                "Created label type:research",
+                                "Created label type:feature",
+                                "Created label type:security",
+                                "Created label type:test",
+                                "Created label type:release",
+                                "Created label priority:P0",
+                                "Created label priority:P1",
+                                "Created label priority:P2",
+                                "Created label phase:00-discovery",
+                                "Created label phase:01-pwa",
+                                "Created label phase:02-audio",
+                                "Created label phase:03-ai",
+                                "Created label phase:04-session",
+                                "Created label phase:05-ui",
+                                "Created label phase:06-security",
+                                "Created label phase:07-release",
+                                "Created label status:blocked",
+                                "Created label status:ready",
+                                "Created EPIC-00 #1 https://github.com/cerennkurucuu/shhh/issues/1",
+                                "Created EPIC-01 #2 https://github.com/cerennkurucuu/shhh/issues/2",
+                                "Created EPIC-02 #3 https://github.com/cerennkurucuu/shhh/issues/3",
+                                "Created EPIC-03 #4 https://github.com/cerennkurucuu/shhh/issues/4",
+                                "Created EPIC-04 #5 https://github.com/cerennkurucuu/shhh/issues/5",
+                                "Created EPIC-05 #6 https://github.com/cerennkurucuu/shhh/issues/6",
+                                "Created EPIC-06 #7 https://github.com/cerennkurucuu/shhh/issues/7",
+                                "Created EPIC-07 #8 https://github.com/cerennkurucuu/shhh/issues/8",
+                                "Created SHHH-001 #9 https://github.com/cerennkurucuu/shhh/issues/9",
+                                "Created SHHH-002 #10 https://github.com/cerennkurucuu/shhh/issues/10",
+                                "Created SHHH-003 #11 https://github.com/cerennkurucuu/shhh/issues/11",
+                                "Created SHHH-004 #12 https://github.com/cerennkurucuu/shhh/issues/12",
+                                "Created SHHH-005 #13 https://github.com/cerennkurucuu/shhh/issues/13",
+                                "Created SHHH-006 #14 https://github.com/cerennkurucuu/shhh/issues/14",
+                                "Created SHHH-007 #15 https://github.com/cerennkurucuu/shhh/issues/15",
+                                "Created SHHH-008 #16 https://github.com/cerennkurucuu/shhh/issues/16",
+                                "Created SHHH-009 #17 https://github.com/cerennkurucuu/shhh/issues/17",
+                                "Created SHHH-010 #18 https://github.com/cerennkurucuu/shhh/issues/18",
+                                "Created SHHH-011 #19 https://github.com/cerennkurucuu/shhh/issues/19",
+                                "Created SHHH-012 #20 https://github.com/cerennkurucuu/shhh/issues/20",
+                                "Created SHHH-013 #21 https://github.com/cerennkurucuu/shhh/issues/21",
+                                "Created SHHH-014 #22 https://github.com/cerennkurucuu/shhh/issues/22",
+                                "Created SHHH-015 #23 https://github.com/cerennkurucuu/shhh/issues/23",
+                                "Created SHHH-016 #24 https://github.com/cerennkurucuu/shhh/issues/24",
+                                "Created SHHH-017 #25 https://github.com/cerennkurucuu/shhh/issues/25",
+                                "Created SHHH-018 #26 https://github.com/cerennkurucuu/shhh/issues/26",
+                                "Created SHHH-019 #27 https://github.com/cerennkurucuu/shhh/issues/27",
+                                "Created SHHH-020 #28 https://github.com/cerennkurucuu/shhh/issues/28",
+                                "Created SHHH-021 #29 https://github.com/cerennkurucuu/shhh/issues/29",
+                                "Created SHHH-022 #30 https://github.com/cerennkurucuu/shhh/issues/30",
+                                "Created SHHH-023 #31 https://github.com/cerennkurucuu/shhh/issues/31",
+                                "Created SHHH-024 #32 https://github.com/cerennkurucuu/shhh/issues/32",
+                                "Linked/checked EPIC-00 #1",
+                                "Linked/checked EPIC-01 #2",
+                                "Linked/checked EPIC-02 #3",
+                                "Linked/checked EPIC-03 #4",
+                                "Linked/checked EPIC-04 #5",
+                                "Linked/checked EPIC-05 #6",
+                                "Linked/checked EPIC-06 #7",
+                                "Linked/checked EPIC-07 #8",
+                                "Linked/checked SHHH-001 #9",
+                                "Linked/checked SHHH-002 #10",
+                                "Linked/checked SHHH-003 #11",
+                                "Linked/checked SHHH-004 #12",
+                                "Linked/checked SHHH-005 #13",
+                                "Linked/checked SHHH-006 #14",
+                                "Linked/checked SHHH-007 #15",
+                                "Linked/checked SHHH-008 #16",
+                                "Linked/checked SHHH-009 #17",
+                                "Linked/checked SHHH-010 #18",
+                                "Linked/checked SHHH-011 #19",
+                                "Linked/checked SHHH-012 #20",
+                                "Linked/checked SHHH-013 #21",
+                                "Linked/checked SHHH-014 #22",
+                                "Linked/checked SHHH-015 #23",
+                                "Linked/checked SHHH-016 #24",
+                                "Linked/checked SHHH-017 #25",
+                                "Linked/checked SHHH-018 #26",
+                                "Linked/checked SHHH-019 #27",
+                                "Linked/checked SHHH-020 #28",
+                                "Linked/checked SHHH-021 #29",
+                                "Linked/checked SHHH-022 #30",
+                                "Linked/checked SHHH-023 #31",
+                                "Linked/checked SHHH-024 #32",
+                                "Verified 8 OPEN Epics + 24 OPEN child issues and all required labels."
+                            ],
+    "issues":  [
+                   {
+                       "code":  "EPIC-00",
+                       "number":  1,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/1"
+                   },
+                   {
+                       "code":  "EPIC-01",
+                       "number":  2,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/2"
+                   },
+                   {
+                       "code":  "EPIC-02",
+                       "number":  3,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/3"
+                   },
+                   {
+                       "code":  "EPIC-03",
+                       "number":  4,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/4"
+                   },
+                   {
+                       "code":  "EPIC-04",
+                       "number":  5,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/5"
+                   },
+                   {
+                       "code":  "EPIC-05",
+                       "number":  6,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/6"
+                   },
+                   {
+                       "code":  "EPIC-06",
+                       "number":  7,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/7"
+                   },
+                   {
+                       "code":  "EPIC-07",
+                       "number":  8,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/8"
+                   },
+                   {
+                       "code":  "SHHH-001",
+                       "number":  9,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/9"
+                   },
+                   {
+                       "code":  "SHHH-002",
+                       "number":  10,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/10"
+                   },
+                   {
+                       "code":  "SHHH-003",
+                       "number":  11,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/11"
+                   },
+                   {
+                       "code":  "SHHH-004",
+                       "number":  12,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/12"
+                   },
+                   {
+                       "code":  "SHHH-005",
+                       "number":  13,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/13"
+                   },
+                   {
+                       "code":  "SHHH-006",
+                       "number":  14,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/14"
+                   },
+                   {
+                       "code":  "SHHH-007",
+                       "number":  15,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/15"
+                   },
+                   {
+                       "code":  "SHHH-008",
+                       "number":  16,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/16"
+                   },
+                   {
+                       "code":  "SHHH-009",
+                       "number":  17,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/17"
+                   },
+                   {
+                       "code":  "SHHH-010",
+                       "number":  18,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/18"
+                   },
+                   {
+                       "code":  "SHHH-011",
+                       "number":  19,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/19"
+                   },
+                   {
+                       "code":  "SHHH-012",
+                       "number":  20,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/20"
+                   },
+                   {
+                       "code":  "SHHH-013",
+                       "number":  21,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/21"
+                   },
+                   {
+                       "code":  "SHHH-014",
+                       "number":  22,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/22"
+                   },
+                   {
+                       "code":  "SHHH-015",
+                       "number":  23,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/23"
+                   },
+                   {
+                       "code":  "SHHH-016",
+                       "number":  24,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/24"
+                   },
+                   {
+                       "code":  "SHHH-017",
+                       "number":  25,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/25"
+                   },
+                   {
+                       "code":  "SHHH-018",
+                       "number":  26,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/26"
+                   },
+                   {
+                       "code":  "SHHH-019",
+                       "number":  27,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/27"
+                   },
+                   {
+                       "code":  "SHHH-020",
+                       "number":  28,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/28"
+                   },
+                   {
+                       "code":  "SHHH-021",
+                       "number":  29,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/29"
+                   },
+                   {
+                       "code":  "SHHH-022",
+                       "number":  30,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/30"
+                   },
+                   {
+                       "code":  "SHHH-023",
+                       "number":  31,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/31"
+                   },
+                   {
+                       "code":  "SHHH-024",
+                       "number":  32,
+                       "url":  "https://github.com/cerennkurucuu/shhh/issues/32"
+                   }
+               ]
+}
