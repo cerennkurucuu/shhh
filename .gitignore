@@ -9,11 +9,32 @@
 
 # Node modules and dependency files
 /node_modules/
-/package-lock.json
 /yarn.lock
 
-# Environment files
+# Secrets and local environment
 /.env
+/.env.*
+!.env.example
+*.pem
+*.key
+/secrets/
+
+# Local audio recordings (never commit user audio)
+/audio/
+/recordings/
+*.wav
+*.mp3
+*.m4a
+*.opus
+*.ogg
+*.flac
+*.amr
+*.aac
+*.webm
+
+# Model weights
+/models/
+ggml-*.bin
 
 # Angular CLI and build artefacts
 /.angular-cli.json

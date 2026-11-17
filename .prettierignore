@@ -1,0 +1,11 @@
+node_modules
+dist
+out-tsc
+coverage
+.tmp
+tmp
+.angular
+package-lock.json
+docs
+planning
+README.md

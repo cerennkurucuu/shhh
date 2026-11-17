@@ -1,0 +1,144 @@
+<main class="page">
+  <header class="hero">
+    <h1>shhh.</h1>
+    <p class="tagline">Paylaşılan sesleri dinlemek yerine oku.</p>
+    <p class="status" role="note">
+      Geliştirme aşamasında — ses dönüştürme özelliği henüz etkin değil. Dosya seçebilirsin; seçilen
+      dosya yazıya dönüştürülmez, cihazından çıkmaz.
+    </p>
+  </header>
+
+  <section
+    class="picker"
+    [class.dragging]="dragging()"
+    aria-labelledby="picker-title"
+    (dragenter)="onDragEnter()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)"
+  >
+    <h2 id="picker-title">Ses dosyası seç</h2>
+    <p class="picker-hint" id="picker-hint">
+      Dosya yalnızca bu tarayıcıda işlenir; hiçbir sunucuya yüklenmez.
+    </p>
+
+    <input
+      class="picker-input"
+      type="file"
+      id="audio-file"
+      accept="audio/*,.mp3,.m4a,.aac,.ogg,.oga,.opus,.wav,.flac,.webm,.amr,.3gp,.aif,.aiff"
+      aria-describedby="picker-hint"
+      (change)="onFileInputChange($event)"
+    />
+    <label class="picker-button" for="audio-file">Dosya seç</label>
+
+    @if (selected(); as sel) {
+      <p class="file-ready" role="status">
+        <span class="file-label">Dosya hazır:</span>
+        <span class="file-name" [attr.title]="sel.name">{{ sel.name }}</span>
+        <span class="file-size">{{ formatSize(sel.size) }}</span>
+        <span class="file-container">{{ sel.container | uppercase }} · ön doğrulamadan geçti</span>
+        @if (wavMetadata(); as meta) {
+          <span class="file-meta">
+            <span class="meta-duration">
+              @if (meta.durationSeconds === null) {
+                Süre bilinmiyor
+              } @else {
+                Süre: {{ formatDuration(meta.durationSeconds) }}
+              }
+            </span>
+            <span class="meta-rate">{{ formatSampleRate(meta.sampleRateHz) }}</span>
+            <span class="meta-channels">{{ meta.channels }} kanal</span>
+            <span class="meta-bits">{{ meta.bitsPerSample }} bit</span>
+          </span>
+        } @else if (oggMetadata(); as meta) {
+          <span class="file-meta">
+            <span class="meta-codec">Codec: {{ meta.codec === 'opus' ? 'Opus' : meta.codec }}</span>
+            <span class="meta-channels">{{ formatOggChannels(meta.channels) }}</span>
+            <span class="meta-rate">{{ formatSampleRate(meta.outputSampleRateHz) }}</span>
+            <span class="meta-duration">Süre bilinmiyor</span>
+          </span>
+        } @else if (mp3Metadata(); as meta) {
+          <span class="file-meta">
+            <span class="meta-codec">Codec: MP3</span>
+            <span class="meta-duration">
+              @if (isUsableDuration(meta.durationSeconds)) {
+                Süre: {{ formatDuration(meta.durationSeconds) }}
+              } @else {
+                Süre bilinmiyor
+              }
+            </span>
+          </span>
+        }
+      </p>
+      @if (wavMetadata()) {
+        <p class="file-note">
+          Süre ve ses özellikleri yalnız WAV başlığından okundu; tam codec/decode doğrulaması henüz
+          yok. Ses yazıya dönüştürme özelliği geliştirme aşamasında; bu aşamada transkripsiyon
+          yapılmaz.
+        </p>
+      } @else if (oggMetadata()) {
+        <p class="file-note">
+          Codec, kanal ve örneklem yalnız OGG başlığından okundu; sesin tamamı doğrulanmadı. Süre
+          başlık okumasıyla güvenle hesaplanamaz. Ses yazıya dönüştürme özelliği geliştirme
+          aşamasında; bu aşamada transkripsiyon yapılmaz.
+        </p>
+      } @else if (mp3Metadata()) {
+        <p class="file-note">
+          Codec ve süre yalnız tarayıcı metadata okumasından geldi; dosyanın tamamı çözülmedi ve
+          süre tahmini kullanılmadı. Ses yazıya dönüştürme özelliği geliştirme aşamasında; bu
+          aşamada transkripsiyon yapılmaz.
+        </p>
+      } @else {
+        <p class="file-note">
+          Ön doğrulama yalnız dosya imzası ve başlık kontrolüdür; codec ve süre doğrulaması henüz
+          yok. Ses yazıya dönüştürme özelliği geliştirme aşamasında; bu aşamada transkripsiyon
+          yapılmaz.
+        </p>
+      }
+    }
+
+    @if (warning()) {
+      <p class="picker-warning" role="note">{{ warning() }}</p>
+    }
+
+    @if (error()) {
+      <p class="picker-error" role="alert">
+        {{ error() }}<span class="error-code">{{ errorCode() }}</span>
+      </p>
+    }
+
+    <p class="drop-hint">Dosyayı bu alana sürükleyip bırakabilirsin.</p>
+  </section>
+
+  <section class="about" aria-labelledby="about-title">
+    <h2 id="about-title">shhh. nedir?</h2>
+
+    <p>
+      shhh., WhatsApp ve diğer uygulamalardan paylaşılan veya elle seçilen sesleri telefonda yazıya
+      dönüştürmeyi hedefleyen ücretsiz, local-first web uygulamasıdır. Amaç, dinlemek yerine
+      okumaktır.
+    </p>
+
+    <h3>Gizlilik</h3>
+    <p>
+      Hedef tasarımda sesler ve transkriptler cihazdan çıkmaz; konuşma hiçbir sunucuya gönderilmez.
+      Hesap, backend, ücretli servis, reklam ve izleme aracı yoktur. Android paylaşım
+      entegrasyonunun ağ güvenliği doğrulanana kadar kapalı kalır.
+    </p>
+
+    <h3>Teknoloji</h3>
+    <p>
+      Uygulama Angular ile geliştirilir ve tarayıcıda çalışır. Yapay zekâ işlemi için açık kaynak
+      yerel bir konuşma tanıma modeli hedeflenir; sonuçlar cihazda üretilir.
+    </p>
+
+    <h3>Kapsam</h3>
+    <p>
+      İlk hedef kısa ve orta kayıtlardır. Özetleme, tercüme ve konuşmacı tanıma kapsam dışıdır.
+      Sayısal doğruluk ve performans sınırları, ölçüm sonuçları açıklandığında kesinleşir.
+    </p>
+  </section>
+</main>
+
+<footer class="footer">by cerenkurucu · Built with AI assistance</footer>
