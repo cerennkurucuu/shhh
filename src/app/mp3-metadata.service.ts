@@ -1,10 +1,16 @@
 import { Injectable } from '@angular/core';
+import {
+  MEDIA_METADATA_TIMEOUT_MS,
+  RECOMMENDED_MAX_DURATION_SECONDS,
+  probeDurationSeconds,
+  revokeQuietly,
+} from './media-duration-probe';
 
 /** HTMLAudioElement metadata yüklemesi için üst sınır (ms); aşarsa süre null sayılır. */
-export const MP3_METADATA_TIMEOUT_MS = 5_000;
+export const MP3_METADATA_TIMEOUT_MS = MEDIA_METADATA_TIMEOUT_MS;
 
 /** docs/02: 20 dakika öneri eşiği; doğrulanmış cihaz sınırı değildir. */
-export const MP3_RECOMMENDED_MAX_DURATION_SECONDS = 20 * 60;
+export const MP3_RECOMMENDED_MAX_DURATION_SECONDS = RECOMMENDED_MAX_DURATION_SECONDS;
 
 export type Mp3MetadataErrorCode = 'invalid-file' | 'unsupported-codec';
 
@@ -42,14 +48,6 @@ function failure(code: Mp3MetadataErrorCode, reason: string, message: string): M
   return { ok: false, code, reason, message };
 }
 
-/** Yalnız sonlu ve negatif olmayan süreler kabul edilir; Infinity/NaN/reddedilir. */
-function normalizeDuration(value: number): number | null {
-  if (!Number.isFinite(value) || value < 0) {
-    return null;
-  }
-  return value;
-}
-
 /**
  * SHHH-014 — MP3 süre metadata (servis katmanı; UI entegrasyonu yok).
  * SHHH-013'ten geçmiş dosya için yalnız yerel Blob URL + HTMLAudioElement
@@ -80,7 +78,7 @@ export class Mp3MetadataService {
     }
 
     try {
-      const durationSeconds = await this.probeDurationSeconds(url);
+      const durationSeconds = await probeDurationSeconds(url, MP3_METADATA_TIMEOUT_MS);
       return {
         ok: true,
         metadata: {
@@ -93,65 +91,5 @@ export class Mp3MetadataService {
     } finally {
       revokeQuietly(url);
     }
-  }
-
-  private async probeDurationSeconds(url: string): Promise<number | null> {
-    if (typeof Audio === 'undefined') {
-      return null;
-    }
-
-    const audio = new Audio();
-    try {
-      return await new Promise<number | null>((resolve) => {
-        let settled = false;
-        const finish = (value: number | null): void => {
-          if (settled) {
-            return;
-          }
-          settled = true;
-          clearTimeout(timer);
-          audio.removeEventListener('loadedmetadata', onLoadedMetadata);
-          audio.removeEventListener('error', onError);
-          resolve(value);
-        };
-        const onLoadedMetadata = (): void => {
-          finish(normalizeDuration(audio.duration));
-        };
-        const onError = (): void => {
-          finish(null);
-        };
-        const timer = setTimeout(() => finish(null), MP3_METADATA_TIMEOUT_MS);
-
-        audio.addEventListener('loadedmetadata', onLoadedMetadata);
-        audio.addEventListener('error', onError);
-
-        try {
-          audio.preload = 'metadata';
-          audio.src = url;
-          audio.load();
-        } catch {
-          finish(null);
-        }
-      });
-    } finally {
-      releaseAudio(audio);
-    }
-  }
-}
-
-function releaseAudio(audio: HTMLAudioElement): void {
-  try {
-    audio.removeAttribute('src');
-    audio.load();
-  } catch {
-    // Temizleme hatası okuma sonucunu bozmamalı.
-  }
-}
-
-function revokeQuietly(url: string): void {
-  try {
-    URL.revokeObjectURL(url);
-  } catch {
-    // revoke hatası okuma sonucunu bozmamalı.
   }
 }

@@ -4,18 +4,24 @@ import { AudioFileValidationService, type ValidationResult } from './audio-file-
 import {
   amrBytes,
   audioFile,
+  flacHeaderBytes,
   longDurationWavBytes,
   mp3FrameBytes,
   mp3WithId3Bytes,
+  mp4FtypBytes,
   nonPcmWavBytes,
   oggNonOpusBytes,
   oggOpusBytes,
   textBytes,
   unknownDurationWavBytes,
   wavBytes,
+  webmHeaderBytes,
 } from './testing/audio-fixtures';
 import { OggMetadataService, type OggMetadataResult } from './ogg-metadata.service';
 import { Mp3MetadataService, type Mp3MetadataResult } from './mp3-metadata.service';
+import { M4aMetadataService, type M4aMetadataResult } from './m4a-metadata.service';
+import { WebmMetadataService, type WebmMetadataResult } from './webm-metadata.service';
+import { FlacMetadataService, type FlacMetadataResult } from './flac-metadata.service';
 import { WavMetadataService, type WavMetadataResult } from './wav-metadata.service';
 
 describe('App', () => {
@@ -1454,6 +1460,1439 @@ describe('App', () => {
       expect(meta?.textContent).toContain('Stereo');
       expect(meta?.textContent).toContain('Süre bilinmiyor');
       expect(meta?.textContent?.includes('Codec: MP3')).toBe(false);
+    });
+  });
+
+  describe('M4A metadata integration', () => {
+    function mockM4aRead(
+      read: (file: File) => Promise<M4aMetadataResult> | M4aMetadataResult,
+    ): void {
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: M4aMetadataService,
+            useValue: { read: (file: File) => Promise.resolve(read(file)) },
+          },
+        ],
+      });
+    }
+
+    function m4aSuccess(durationSeconds: number | null): M4aMetadataResult {
+      return {
+        ok: true,
+        metadata: { codec: null, durationSeconds },
+        exceedsRecommendedDuration:
+          durationSeconds !== null && durationSeconds > RECOMMENDED_MAX_DURATION_SECONDS,
+      };
+    }
+
+    function m4aFile(name = 'kayit.m4a'): File {
+      return audioFile(mp4FtypBytes(), name, 'audio/mp4');
+    }
+
+    it('shows Container M4A/MP4, unknown codec and a reliable m:ss duration', async () => {
+      mockM4aRead(() => m4aSuccess(65.4));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([m4aFile()]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toBeNull();
+      expect(component.m4aMetadata()).toEqual({ codec: null, durationSeconds: 65.4 });
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+
+      const meta = compiled.querySelector('.file-meta');
+      expect(meta?.textContent).toContain('Container: M4A/MP4');
+      expect(meta?.textContent).toContain('Codec: Bilinmiyor');
+      expect(meta?.textContent).toContain('Süre: 1:05');
+      expect(meta?.textContent).not.toContain('AAC');
+      expect(compiled.querySelector('.file-note')?.textContent).toContain(
+        'codec (ör. AAC) doğrulanmadı',
+      );
+      expect(compiled.querySelector('.file-note')?.textContent).not.toContain('tamamı doğrulandı');
+    });
+
+    it('shows "Süre bilinmiyor" when M4A duration is null (no estimate)', async () => {
+      mockM4aRead(() => m4aSuccess(null));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([m4aFile('belirsiz.m4a')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toBeNull();
+      expect(component.m4aMetadata()?.durationSeconds).toBeNull();
+      expect(component.m4aMetadata()?.codec).toBeNull();
+
+      const meta = compiled.querySelector('.file-meta');
+      expect(meta?.textContent).toContain('Codec: Bilinmiyor');
+      expect(meta?.textContent).toContain('Süre bilinmiyor');
+      expect(meta?.textContent).not.toContain('Süre:');
+      expect(meta?.textContent).not.toContain('tahmin');
+      expect(meta?.textContent).not.toContain('%');
+    });
+
+    it('never claims AAC codec from container alone', async () => {
+      mockM4aRead(() => m4aSuccess(3));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([m4aFile('aac-gibi.m4a')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      const meta = compiled.querySelector('.file-meta')?.textContent ?? '';
+      expect(meta).toContain('Codec: Bilinmiyor');
+      expect(meta).not.toContain('Codec: AAC');
+      expect(meta).not.toContain('AAC');
+      expect(component.m4aMetadata()?.codec).toBeNull();
+    });
+
+    it('does not show NaN, Infinity, negative or zero duration as reliable', async () => {
+      for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, -3, 0]) {
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({
+          imports: [App],
+          providers: [
+            {
+              provide: M4aMetadataService,
+              useValue: {
+                read: () =>
+                  Promise.resolve({
+                    ok: true,
+                    metadata: { codec: null, durationSeconds: bad },
+                    exceedsRecommendedDuration: false,
+                  } satisfies M4aMetadataResult),
+              },
+            },
+          ],
+        });
+        const fixture = createFixture();
+        const component = fixture.componentInstance;
+
+        await component.handleFiles([m4aFile('gecersiz.m4a')]);
+        await fixture.whenStable();
+        const compiled = fixture.nativeElement as HTMLElement;
+
+        expect(component.error()).toBeNull();
+        const meta = compiled.querySelector('.file-meta');
+        expect(meta?.textContent).toContain('Süre bilinmiyor');
+        expect(meta?.textContent).not.toContain('Süre:');
+        expect(meta?.textContent).not.toContain('NaN');
+        expect(meta?.textContent).not.toContain('Infinity');
+        expect(component.isUsableM4aDuration(bad)).toBe(false);
+        expect(component.isUsableM4aDuration(null)).toBe(false);
+        expect(component.isUsableM4aDuration(0)).toBe(false);
+        expect(component.isUsableM4aDuration(0.5)).toBe(true);
+        expect(component.isUsableM4aDuration(12.5)).toBe(true);
+      }
+    });
+
+    it('rejects an M4A longer than 20 minutes with the existing error model', async () => {
+      mockM4aRead(() => m4aSuccess(RECOMMENDED_MAX_DURATION_SECONDS + 1));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(wavBytes(), 'guvenli.wav', 'audio/wav')]);
+      await component.handleFiles([m4aFile('uzun.m4a')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toContain('20 dakika');
+      expect(component.errorCode()).toBe('invalid-file');
+      expect(component.selected()).toEqual({ name: 'guvenli.wav', size: 60, container: 'wav' });
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.wavMetadata()).not.toBeNull();
+      expect(compiled.querySelector('.error-code')?.textContent).toBe('invalid-file');
+    });
+
+    it('accepts an M4A of exactly 20 minutes (boundary is not exceeded)', async () => {
+      mockM4aRead(() => m4aSuccess(RECOMMENDED_MAX_DURATION_SECONDS));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([m4aFile('tam.m4a')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toBeNull();
+      expect(component.selected()?.name).toBe('tam.m4a');
+      expect(component.m4aMetadata()?.durationSeconds).toBe(1200);
+      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 20:00');
+      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+    });
+
+    it('keeps the previous file and metadata when M4A metadata read fails', async () => {
+      mockM4aRead(() =>
+        Promise.resolve({
+          ok: false,
+          code: 'invalid-file',
+          reason: 'unreadable',
+          message: 'Dosya okunamadı. Tekrar seçmeyi deneyin.',
+        } satisfies M4aMetadataResult),
+      );
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(wavBytes(), 'wav-once.wav', 'audio/wav')]);
+      const previousWav = component.wavMetadata();
+      expect(previousWav).not.toBeNull();
+
+      await component.handleFiles([m4aFile('kirik.m4a')]);
+      await fixture.whenStable();
+
+      expect(component.error()).toContain('okunamadı');
+      expect(component.selected()).toEqual({ name: 'wav-once.wav', size: 60, container: 'wav' });
+      expect(component.wavMetadata()).toEqual(previousWav);
+      expect(component.m4aMetadata()).toBeNull();
+    });
+
+    it('keeps the previous file when M4A fails pre-validation', async () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(oggOpusBytes(), 'ogg-once.ogg', 'audio/ogg')]);
+      await component.handleFiles([audioFile(textBytes(), 'metin.m4a', 'audio/mp4')]);
+
+      expect(component.error()).not.toBeNull();
+      expect(component.selected()?.name).toBe('ogg-once.ogg');
+      expect(component.oggMetadata()).not.toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+    });
+
+    it('ignores a stale M4A metadata result that resolves after a newer selection', async () => {
+      const pending: {
+        file: File;
+        resolve: (result: M4aMetadataResult) => void;
+      }[] = [];
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: M4aMetadataService,
+            useValue: {
+              read: (file: File) =>
+                new Promise<M4aMetadataResult>((resolve) => pending.push({ file, resolve })),
+            },
+          },
+        ],
+      });
+
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const m4aA = m4aFile('eski.m4a');
+      const wavB = audioFile(wavBytes(), 'yeni.wav', 'audio/wav');
+
+      const first = component.handleFiles([m4aA]);
+      for (let i = 0; i < 20 && pending.length === 0; i++) {
+        await Promise.resolve();
+      }
+      expect(pending).toHaveLength(1);
+
+      const second = component.handleFiles([wavB]);
+      await second;
+      expect(component.selected()?.name).toBe('yeni.wav');
+      expect(component.wavMetadata()).not.toBeNull();
+
+      pending[0].resolve(m4aSuccess(99));
+      await first;
+
+      expect(component.selected()?.name).toBe('yeni.wav');
+      expect(component.wavMetadata()?.sampleRateHz).toBe(8000);
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.error()).toBeNull();
+    });
+
+    it('handles rapid consecutive M4A selections without losing the newest result', async () => {
+      const pending: {
+        file: File;
+        resolve: (result: M4aMetadataResult) => void;
+      }[] = [];
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: AudioFileValidationService,
+            useValue: {
+              validate: () =>
+                Promise.resolve({ ok: true, container: 'mp4', warning: null } as ValidationResult),
+            },
+          },
+          {
+            provide: M4aMetadataService,
+            useValue: {
+              read: (file: File) =>
+                new Promise<M4aMetadataResult>((resolve) => pending.push({ file, resolve })),
+            },
+          },
+        ],
+      });
+
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const a = m4aFile('a.m4a');
+      const b = m4aFile('b.m4a');
+
+      const first = component.handleFiles([a]);
+      for (let i = 0; i < 20 && pending.length === 0; i++) {
+        await Promise.resolve();
+      }
+      const second = component.handleFiles([b]);
+      for (let i = 0; i < 40 && pending.length < 2; i++) {
+        await Promise.resolve();
+      }
+      expect(pending.length).toBeGreaterThanOrEqual(2);
+
+      const lastJob = pending[pending.length - 1];
+      lastJob.resolve(m4aSuccess(2.5));
+      await second;
+      expect(component.selected()?.name).toBe('b.m4a');
+      expect(component.m4aMetadata()?.durationSeconds).toBe(2.5);
+
+      pending[0].resolve(m4aSuccess(77));
+      await first;
+
+      expect(component.selected()?.name).toBe('b.m4a');
+      expect(component.m4aMetadata()?.durationSeconds).toBe(2.5);
+      expect(component.error()).toBeNull();
+    });
+
+    it('clears metadata across M4A → MP3 → WAV → OGG transitions', async () => {
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: M4aMetadataService,
+            useValue: { read: () => Promise.resolve(m4aSuccess(3)) },
+          },
+          {
+            provide: Mp3MetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: 'mp3', durationSeconds: 4 },
+                  exceedsRecommendedDuration: false,
+                } satisfies Mp3MetadataResult),
+            },
+          },
+        ],
+      });
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([m4aFile('m4a-secim.m4a')]);
+      expect(component.m4aMetadata()).not.toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(mp3FrameBytes(), 'mp3-sonra.mp3', 'audio/mpeg')]);
+      expect(component.mp3Metadata()).not.toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(wavBytes(), 'wav-sonra.wav', 'audio/wav')]);
+      expect(component.wavMetadata()).not.toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(oggOpusBytes(), 'ogg-sonra.ogg', 'audio/ogg')]);
+      expect(component.oggMetadata()).not.toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Codec: Opus');
+      expect(compiled.querySelector('.file-meta')?.textContent).not.toContain('M4A/MP4');
+      expect(compiled.querySelector('.file-meta')?.textContent).not.toContain('Codec: MP3');
+    });
+
+    it('does not call M4aMetadataService for non-MP4 containers', async () => {
+      const m4aReadCalls: File[] = [];
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: M4aMetadataService,
+            useValue: {
+              read: (file: File) => {
+                m4aReadCalls.push(file);
+                return Promise.resolve(m4aSuccess(1));
+              },
+            },
+          },
+          {
+            provide: Mp3MetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: 'mp3', durationSeconds: 1 },
+                  exceedsRecommendedDuration: false,
+                } satisfies Mp3MetadataResult),
+            },
+          },
+        ],
+      });
+
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(wavBytes(), 'yalniz.wav', 'audio/wav')]);
+      await component.handleFiles([audioFile(oggOpusBytes(), 'yalniz.ogg', 'audio/ogg')]);
+      await component.handleFiles([audioFile(mp3FrameBytes(), 'yalniz.mp3', 'audio/mpeg')]);
+      expect(m4aReadCalls).toHaveLength(0);
+      expect(component.m4aMetadata()).toBeNull();
+    });
+
+    it('keeps MP3 metadata display intact after MP3 selection (MP3 regression)', async () => {
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: Mp3MetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: 'mp3', durationSeconds: 65.4 },
+                  exceedsRecommendedDuration: false,
+                } satisfies Mp3MetadataResult),
+            },
+          },
+        ],
+      });
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(mp3FrameBytes(), 'regresyon.mp3', 'audio/mpeg')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.mp3Metadata()).not.toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      const meta = compiled.querySelector('.file-meta');
+      expect(meta?.textContent).toContain('Codec: MP3');
+      expect(meta?.textContent).not.toContain('M4A/MP4');
+      expect(meta?.textContent).not.toContain('Bilinmiyor');
+      expect(compiled.querySelector('.file-note')?.textContent).toContain(
+        'dosyanın tamamı çözülmedi',
+      );
+    });
+  });
+
+  describe('WebM metadata integration', () => {
+    function mockWebmRead(
+      read: (file: File) => Promise<WebmMetadataResult> | WebmMetadataResult,
+    ): void {
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: WebmMetadataService,
+            useValue: { read: (file: File) => Promise.resolve(read(file)) },
+          },
+        ],
+      });
+    }
+
+    function webmSuccess(durationSeconds: number | null): WebmMetadataResult {
+      return {
+        ok: true,
+        metadata: { codec: null, durationSeconds },
+        exceedsRecommendedDuration:
+          durationSeconds !== null && durationSeconds > RECOMMENDED_MAX_DURATION_SECONDS,
+      };
+    }
+
+    function webmFile(name = 'kayit.webm'): File {
+      return audioFile(webmHeaderBytes(), name, 'audio/webm');
+    }
+
+    it('shows Container WebM, unknown codec and a reliable m:ss duration', async () => {
+      mockWebmRead(() => webmSuccess(65.4));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([webmFile()]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toBeNull();
+      expect(component.webmMetadata()).toEqual({ codec: null, durationSeconds: 65.4 });
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+
+      const meta = compiled.querySelector('.file-meta');
+      expect(meta?.textContent).toContain('Container: WebM');
+      expect(meta?.textContent).toContain('Codec: Bilinmiyor');
+      expect(meta?.textContent).toContain('Süre: 1:05');
+      expect(meta?.textContent).not.toContain('Opus');
+      expect(meta?.textContent).not.toContain('Vorbis');
+      expect(compiled.querySelector('.file-note')?.textContent).toContain(
+        'codec (ör. Opus/Vorbis) doğrulanmadı',
+      );
+      expect(compiled.querySelector('.file-note')?.textContent).not.toContain('tamamı doğrulandı');
+      expect(compiled.querySelector('.file-note')?.textContent).toContain(
+        'ses izi loadedmetadata ile kanıtlanmaz',
+      );
+    });
+
+    it('shows "Süre bilinmiyor" when WebM duration is null (no estimate)', async () => {
+      mockWebmRead(() => webmSuccess(null));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([webmFile('belirsiz.webm')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toBeNull();
+      expect(component.webmMetadata()?.durationSeconds).toBeNull();
+      expect(component.webmMetadata()?.codec).toBeNull();
+
+      const meta = compiled.querySelector('.file-meta');
+      expect(meta?.textContent).toContain('Codec: Bilinmiyor');
+      expect(meta?.textContent).toContain('Süre bilinmiyor');
+      expect(meta?.textContent).not.toContain('Süre:');
+      expect(meta?.textContent).not.toContain('tahmin');
+      expect(meta?.textContent).not.toContain('%');
+    });
+
+    it('never claims Opus or Vorbis codec from container alone', async () => {
+      mockWebmRead(() => webmSuccess(3));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([webmFile('opus-gibi.webm')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      const meta = compiled.querySelector('.file-meta')?.textContent ?? '';
+      expect(meta).toContain('Codec: Bilinmiyor');
+      expect(meta).not.toContain('Codec: Opus');
+      expect(meta).not.toContain('Codec: Vorbis');
+      expect(meta).not.toContain('Opus');
+      expect(meta).not.toContain('Vorbis');
+      expect(component.webmMetadata()?.codec).toBeNull();
+    });
+
+    it('does not show NaN, Infinity, negative or zero duration as reliable', async () => {
+      for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, -3, 0]) {
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({
+          imports: [App],
+          providers: [
+            {
+              provide: WebmMetadataService,
+              useValue: {
+                read: () =>
+                  Promise.resolve({
+                    ok: true,
+                    metadata: { codec: null, durationSeconds: bad },
+                    exceedsRecommendedDuration: false,
+                  } satisfies WebmMetadataResult),
+              },
+            },
+          ],
+        });
+        const fixture = createFixture();
+        const component = fixture.componentInstance;
+
+        await component.handleFiles([webmFile('gecersiz.webm')]);
+        await fixture.whenStable();
+        const compiled = fixture.nativeElement as HTMLElement;
+
+        expect(component.error()).toBeNull();
+        const meta = compiled.querySelector('.file-meta');
+        expect(meta?.textContent).toContain('Süre bilinmiyor');
+        expect(meta?.textContent).not.toContain('Süre:');
+        expect(meta?.textContent).not.toContain('NaN');
+        expect(meta?.textContent).not.toContain('Infinity');
+        expect(component.isUsableM4aDuration(bad)).toBe(false);
+        expect(component.isUsableM4aDuration(null)).toBe(false);
+        expect(component.isUsableM4aDuration(0)).toBe(false);
+        expect(component.isUsableM4aDuration(0.5)).toBe(true);
+        expect(component.isUsableM4aDuration(12.5)).toBe(true);
+      }
+    });
+
+    it('rejects a WebM longer than 20 minutes with the existing error model', async () => {
+      mockWebmRead(() => webmSuccess(RECOMMENDED_MAX_DURATION_SECONDS + 1));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(wavBytes(), 'guvenli.wav', 'audio/wav')]);
+      await component.handleFiles([webmFile('uzun.webm')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toContain('20 dakika');
+      expect(component.errorCode()).toBe('invalid-file');
+      expect(component.selected()).toEqual({ name: 'guvenli.wav', size: 60, container: 'wav' });
+      expect(component.webmMetadata()).toBeNull();
+      expect(component.wavMetadata()).not.toBeNull();
+      expect(compiled.querySelector('.error-code')?.textContent).toBe('invalid-file');
+    });
+
+    it('accepts a WebM of exactly 20 minutes (boundary is not exceeded)', async () => {
+      mockWebmRead(() => webmSuccess(RECOMMENDED_MAX_DURATION_SECONDS));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([webmFile('tam.webm')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toBeNull();
+      expect(component.selected()?.name).toBe('tam.webm');
+      expect(component.webmMetadata()?.durationSeconds).toBe(1200);
+      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 20:00');
+      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+    });
+
+    it('keeps the previous file and metadata when WebM metadata read fails', async () => {
+      mockWebmRead(() =>
+        Promise.resolve({
+          ok: false,
+          code: 'invalid-file',
+          reason: 'unreadable',
+          message: 'Dosya okunamadı. Tekrar seçmeyi deneyin.',
+        } satisfies WebmMetadataResult),
+      );
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(wavBytes(), 'wav-once.wav', 'audio/wav')]);
+      const previousWav = component.wavMetadata();
+      expect(previousWav).not.toBeNull();
+
+      await component.handleFiles([webmFile('kirik.webm')]);
+      await fixture.whenStable();
+
+      expect(component.error()).toContain('okunamadı');
+      expect(component.selected()).toEqual({ name: 'wav-once.wav', size: 60, container: 'wav' });
+      expect(component.wavMetadata()).toEqual(previousWav);
+      expect(component.webmMetadata()).toBeNull();
+    });
+
+    it('keeps the previous file when WebM fails pre-validation', async () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(oggOpusBytes(), 'ogg-once.ogg', 'audio/ogg')]);
+      await component.handleFiles([audioFile(textBytes(), 'metin.webm', 'audio/webm')]);
+
+      expect(component.error()).not.toBeNull();
+      expect(component.selected()?.name).toBe('ogg-once.ogg');
+      expect(component.oggMetadata()).not.toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+    });
+
+    it('ignores a stale WebM metadata result that resolves after a newer selection', async () => {
+      const pending: {
+        file: File;
+        resolve: (result: WebmMetadataResult) => void;
+      }[] = [];
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: WebmMetadataService,
+            useValue: {
+              read: (file: File) =>
+                new Promise<WebmMetadataResult>((resolve) => pending.push({ file, resolve })),
+            },
+          },
+        ],
+      });
+
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const webmA = webmFile('eski.webm');
+      const wavB = audioFile(wavBytes(), 'yeni.wav', 'audio/wav');
+
+      const first = component.handleFiles([webmA]);
+      for (let i = 0; i < 20 && pending.length === 0; i++) {
+        await Promise.resolve();
+      }
+      expect(pending).toHaveLength(1);
+
+      const second = component.handleFiles([wavB]);
+      await second;
+      expect(component.selected()?.name).toBe('yeni.wav');
+      expect(component.wavMetadata()).not.toBeNull();
+
+      pending[0].resolve(webmSuccess(99));
+      await first;
+
+      expect(component.selected()?.name).toBe('yeni.wav');
+      expect(component.wavMetadata()?.sampleRateHz).toBe(8000);
+      expect(component.webmMetadata()).toBeNull();
+      expect(component.error()).toBeNull();
+    });
+
+    it('handles rapid consecutive WebM selections without losing the newest result', async () => {
+      const pending: {
+        file: File;
+        resolve: (result: WebmMetadataResult) => void;
+      }[] = [];
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: AudioFileValidationService,
+            useValue: {
+              validate: () =>
+                Promise.resolve({ ok: true, container: 'webm', warning: null } as ValidationResult),
+            },
+          },
+          {
+            provide: WebmMetadataService,
+            useValue: {
+              read: (file: File) =>
+                new Promise<WebmMetadataResult>((resolve) => pending.push({ file, resolve })),
+            },
+          },
+        ],
+      });
+
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const a = webmFile('a.webm');
+      const b = webmFile('b.webm');
+
+      const first = component.handleFiles([a]);
+      for (let i = 0; i < 20 && pending.length === 0; i++) {
+        await Promise.resolve();
+      }
+      const second = component.handleFiles([b]);
+      for (let i = 0; i < 40 && pending.length < 2; i++) {
+        await Promise.resolve();
+      }
+      expect(pending.length).toBeGreaterThanOrEqual(2);
+
+      const lastJob = pending[pending.length - 1];
+      lastJob.resolve(webmSuccess(2.5));
+      await second;
+      expect(component.selected()?.name).toBe('b.webm');
+      expect(component.webmMetadata()?.durationSeconds).toBe(2.5);
+
+      pending[0].resolve(webmSuccess(77));
+      await first;
+
+      expect(component.selected()?.name).toBe('b.webm');
+      expect(component.webmMetadata()?.durationSeconds).toBe(2.5);
+      expect(component.error()).toBeNull();
+    });
+
+    it('clears metadata across WebM → M4A → MP3 → WAV → OGG transitions', async () => {
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: WebmMetadataService,
+            useValue: { read: () => Promise.resolve(webmSuccess(3)) },
+          },
+          {
+            provide: M4aMetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: null, durationSeconds: 5 },
+                  exceedsRecommendedDuration: false,
+                } satisfies M4aMetadataResult),
+            },
+          },
+          {
+            provide: Mp3MetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: 'mp3', durationSeconds: 4 },
+                  exceedsRecommendedDuration: false,
+                } satisfies Mp3MetadataResult),
+            },
+          },
+        ],
+      });
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([webmFile('webm-secim.webm')]);
+      expect(component.webmMetadata()).not.toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(mp4FtypBytes(), 'm4a-sonra.m4a', 'audio/mp4')]);
+      expect(component.m4aMetadata()).not.toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(mp3FrameBytes(), 'mp3-sonra.mp3', 'audio/mpeg')]);
+      expect(component.mp3Metadata()).not.toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(wavBytes(), 'wav-sonra.wav', 'audio/wav')]);
+      expect(component.wavMetadata()).not.toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(oggOpusBytes(), 'ogg-sonra.ogg', 'audio/ogg')]);
+      expect(component.oggMetadata()).not.toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Codec: Opus');
+      expect(compiled.querySelector('.file-meta')?.textContent).not.toContain('WebM');
+      expect(compiled.querySelector('.file-meta')?.textContent).not.toContain('M4A/MP4');
+      expect(compiled.querySelector('.file-meta')?.textContent).not.toContain('Codec: MP3');
+    });
+
+    it('does not call WebmMetadataService for non-WebM containers', async () => {
+      const webmReadCalls: File[] = [];
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: WebmMetadataService,
+            useValue: {
+              read: (file: File) => {
+                webmReadCalls.push(file);
+                return Promise.resolve(webmSuccess(1));
+              },
+            },
+          },
+          {
+            provide: Mp3MetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: 'mp3', durationSeconds: 1 },
+                  exceedsRecommendedDuration: false,
+                } satisfies Mp3MetadataResult),
+            },
+          },
+          {
+            provide: M4aMetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: null, durationSeconds: 1 },
+                  exceedsRecommendedDuration: false,
+                } satisfies M4aMetadataResult),
+            },
+          },
+        ],
+      });
+
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(wavBytes(), 'yalniz.wav', 'audio/wav')]);
+      await component.handleFiles([audioFile(oggOpusBytes(), 'yalniz.ogg', 'audio/ogg')]);
+      await component.handleFiles([audioFile(mp3FrameBytes(), 'yalniz.mp3', 'audio/mpeg')]);
+      await component.handleFiles([audioFile(mp4FtypBytes(), 'yalniz.m4a', 'audio/mp4')]);
+      expect(webmReadCalls).toHaveLength(0);
+      expect(component.webmMetadata()).toBeNull();
+    });
+
+    it('keeps M4A metadata display intact after M4A selection (M4A regression)', async () => {
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: M4aMetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: null, durationSeconds: 65.4 },
+                  exceedsRecommendedDuration: false,
+                } satisfies M4aMetadataResult),
+            },
+          },
+        ],
+      });
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(mp4FtypBytes(), 'regresyon.m4a', 'audio/mp4')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.m4aMetadata()).not.toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      const meta = compiled.querySelector('.file-meta');
+      expect(meta?.textContent).toContain('Container: M4A/MP4');
+      expect(meta?.textContent).toContain('Codec: Bilinmiyor');
+      expect(meta?.textContent).toContain('Süre: 1:05');
+      expect(meta?.textContent).not.toContain('Container: WebM');
+      expect(compiled.querySelector('.file-note')?.textContent).toContain('M4A bir container');
+    });
+  });
+
+  describe('FLAC metadata integration', () => {
+    function mockFlacRead(
+      read: (file: File) => Promise<FlacMetadataResult> | FlacMetadataResult,
+    ): void {
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: FlacMetadataService,
+            useValue: { read: (file: File) => Promise.resolve(read(file)) },
+          },
+        ],
+      });
+    }
+
+    function flacSuccess(overrides: {
+      sampleRateHz?: number;
+      channels?: number;
+      bitsPerSample?: number;
+      durationSeconds: number | null;
+    }): FlacMetadataResult {
+      return {
+        ok: true,
+        metadata: {
+          sampleRateHz: overrides.sampleRateHz ?? 44100,
+          channels: overrides.channels ?? 1,
+          bitsPerSample: overrides.bitsPerSample ?? 16,
+          durationSeconds: overrides.durationSeconds,
+        },
+        exceedsRecommendedDuration:
+          overrides.durationSeconds !== null &&
+          overrides.durationSeconds > RECOMMENDED_MAX_DURATION_SECONDS,
+      };
+    }
+
+    function flacFile(name = 'kayit.flac'): File {
+      return audioFile(flacHeaderBytes(), name, 'audio/flac');
+    }
+
+    it('shows Codec FLAC, mono rate bits and a reliable m:ss duration', async () => {
+      mockFlacRead(() =>
+        flacSuccess({
+          sampleRateHz: 44100,
+          channels: 1,
+          bitsPerSample: 16,
+          durationSeconds: 65.4,
+        }),
+      );
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([flacFile()]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toBeNull();
+      expect(component.flacMetadata()).toEqual({
+        sampleRateHz: 44100,
+        channels: 1,
+        bitsPerSample: 16,
+        durationSeconds: 65.4,
+      });
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+
+      const meta = compiled.querySelector('.file-meta');
+      expect(meta?.textContent).toContain('Codec: FLAC');
+      expect(meta?.textContent).toContain('Süre: 1:05');
+      expect(meta?.textContent).toContain('44100 Hz');
+      expect(meta?.textContent).toContain('Mono');
+      expect(meta?.textContent).toContain('16 bit');
+      expect(compiled.querySelector('.file-note')?.textContent).toContain(
+        'STREAMINFO başlığından okundu',
+      );
+      expect(compiled.querySelector('.file-note')?.textContent).toContain(
+        'ses karelerinin varlığını veya gerçek decode başarısını kanıtlamaz',
+      );
+      expect(compiled.querySelector('.file-note')?.textContent).not.toContain('tamamı doğrulandı');
+    });
+
+    it('shows stereo 48 kHz 24-bit fields for a stereo FLAC', async () => {
+      mockFlacRead(() =>
+        flacSuccess({
+          sampleRateHz: 48000,
+          channels: 2,
+          bitsPerSample: 24,
+          durationSeconds: 120,
+        }),
+      );
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([flacFile('stereo.flac')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      const meta = compiled.querySelector('.file-meta');
+      expect(meta?.textContent).toContain('Codec: FLAC');
+      expect(meta?.textContent).toContain('Süre: 2:00');
+      expect(meta?.textContent).toContain('48 kHz');
+      expect(meta?.textContent).toContain('Stereo');
+      expect(meta?.textContent).toContain('24 bit');
+      expect(component.flacMetadata()?.channels).toBe(2);
+    });
+
+    it('shows "Süre bilinmiyor" when FLAC duration is null (no estimate)', async () => {
+      mockFlacRead(() => flacSuccess({ durationSeconds: null }));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([flacFile('belirsiz.flac')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toBeNull();
+      expect(component.flacMetadata()?.durationSeconds).toBeNull();
+
+      const meta = compiled.querySelector('.file-meta');
+      expect(meta?.textContent).toContain('Codec: FLAC');
+      expect(meta?.textContent).toContain('Süre bilinmiyor');
+      expect(meta?.textContent).not.toContain('Süre:');
+      expect(meta?.textContent).not.toContain('tahmin');
+      expect(meta?.textContent).not.toContain('%');
+    });
+
+    it('does not show NaN, Infinity or negative duration as reliable', async () => {
+      for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, -3]) {
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({
+          imports: [App],
+          providers: [
+            {
+              provide: FlacMetadataService,
+              useValue: {
+                read: () =>
+                  Promise.resolve({
+                    ok: true,
+                    metadata: {
+                      sampleRateHz: 44100,
+                      channels: 1,
+                      bitsPerSample: 16,
+                      durationSeconds: bad,
+                    },
+                    exceedsRecommendedDuration: false,
+                  } satisfies FlacMetadataResult),
+              },
+            },
+          ],
+        });
+        const fixture = createFixture();
+        const component = fixture.componentInstance;
+
+        await component.handleFiles([flacFile('gecersiz.flac')]);
+        await fixture.whenStable();
+        const compiled = fixture.nativeElement as HTMLElement;
+
+        expect(component.error()).toBeNull();
+        const meta = compiled.querySelector('.file-meta');
+        expect(meta?.textContent).toContain('Süre bilinmiyor');
+        expect(meta?.textContent).not.toContain('Süre:');
+        expect(meta?.textContent).not.toContain('NaN');
+        expect(meta?.textContent).not.toContain('Infinity');
+        expect(component.isUsableDuration(bad)).toBe(false);
+      }
+    });
+
+    it('accepts a FLAC of exactly 20 minutes (boundary is not exceeded)', async () => {
+      mockFlacRead(() => flacSuccess({ durationSeconds: RECOMMENDED_MAX_DURATION_SECONDS }));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([flacFile('tam.flac')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toBeNull();
+      expect(component.selected()?.name).toBe('tam.flac');
+      expect(component.flacMetadata()?.durationSeconds).toBe(1200);
+      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 20:00');
+      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+    });
+
+    it('rejects a FLAC longer than 20 minutes with the existing error model', async () => {
+      mockFlacRead(() => flacSuccess({ durationSeconds: RECOMMENDED_MAX_DURATION_SECONDS + 1 }));
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(wavBytes(), 'guvenli.wav', 'audio/wav')]);
+      await component.handleFiles([flacFile('uzun.flac')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.error()).toContain('20 dakika');
+      expect(component.errorCode()).toBe('invalid-file');
+      expect(component.selected()).toEqual({ name: 'guvenli.wav', size: 60, container: 'wav' });
+      expect(component.flacMetadata()).toBeNull();
+      expect(component.wavMetadata()).not.toBeNull();
+      expect(compiled.querySelector('.error-code')?.textContent).toBe('invalid-file');
+    });
+
+    it('keeps the previous file and metadata when FLAC metadata read fails', async () => {
+      mockFlacRead(() =>
+        Promise.resolve({
+          ok: false,
+          code: 'invalid-file',
+          reason: 'bad-streaminfo',
+          message: 'FLAC STREAMINFO bloğu geçersiz veya eksik görünüyor.',
+        } satisfies FlacMetadataResult),
+      );
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(wavBytes(), 'wav-once.wav', 'audio/wav')]);
+      const previousWav = component.wavMetadata();
+      expect(previousWav).not.toBeNull();
+
+      await component.handleFiles([flacFile('kirik.flac')]);
+      await fixture.whenStable();
+
+      expect(component.error()).toContain('STREAMINFO');
+      expect(component.selected()).toEqual({ name: 'wav-once.wav', size: 60, container: 'wav' });
+      expect(component.wavMetadata()).toEqual(previousWav);
+      expect(component.flacMetadata()).toBeNull();
+    });
+
+    it('keeps the previous file when FLAC fails pre-validation', async () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(oggOpusBytes(), 'ogg-once.ogg', 'audio/ogg')]);
+      await component.handleFiles([audioFile(textBytes(), 'metin.flac', 'audio/flac')]);
+
+      expect(component.error()).not.toBeNull();
+      expect(component.selected()?.name).toBe('ogg-once.ogg');
+      expect(component.oggMetadata()).not.toBeNull();
+      expect(component.flacMetadata()).toBeNull();
+    });
+
+    it('ignores a stale FLAC metadata result that resolves after a newer selection', async () => {
+      const pending: {
+        file: File;
+        resolve: (result: FlacMetadataResult) => void;
+      }[] = [];
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: FlacMetadataService,
+            useValue: {
+              read: (file: File) =>
+                new Promise<FlacMetadataResult>((resolve) => pending.push({ file, resolve })),
+            },
+          },
+        ],
+      });
+
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const flacA = flacFile('eski.flac');
+      const wavB = audioFile(wavBytes(), 'yeni.wav', 'audio/wav');
+
+      const first = component.handleFiles([flacA]);
+      for (let i = 0; i < 20 && pending.length === 0; i++) {
+        await Promise.resolve();
+      }
+      expect(pending).toHaveLength(1);
+
+      const second = component.handleFiles([wavB]);
+      await second;
+      expect(component.selected()?.name).toBe('yeni.wav');
+      expect(component.wavMetadata()).not.toBeNull();
+
+      pending[0].resolve(flacSuccess({ durationSeconds: 99 }));
+      await first;
+
+      expect(component.selected()?.name).toBe('yeni.wav');
+      expect(component.wavMetadata()?.sampleRateHz).toBe(8000);
+      expect(component.flacMetadata()).toBeNull();
+      expect(component.error()).toBeNull();
+    });
+
+    it('handles rapid consecutive FLAC selections without losing the newest result', async () => {
+      const pending: {
+        file: File;
+        resolve: (result: FlacMetadataResult) => void;
+      }[] = [];
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: AudioFileValidationService,
+            useValue: {
+              validate: () =>
+                Promise.resolve({ ok: true, container: 'flac', warning: null } as ValidationResult),
+            },
+          },
+          {
+            provide: FlacMetadataService,
+            useValue: {
+              read: (file: File) =>
+                new Promise<FlacMetadataResult>((resolve) => pending.push({ file, resolve })),
+            },
+          },
+        ],
+      });
+
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const a = flacFile('a.flac');
+      const b = flacFile('b.flac');
+
+      const first = component.handleFiles([a]);
+      for (let i = 0; i < 20 && pending.length === 0; i++) {
+        await Promise.resolve();
+      }
+      const second = component.handleFiles([b]);
+      for (let i = 0; i < 40 && pending.length < 2; i++) {
+        await Promise.resolve();
+      }
+      expect(pending.length).toBeGreaterThanOrEqual(2);
+
+      const lastJob = pending[pending.length - 1];
+      lastJob.resolve(flacSuccess({ durationSeconds: 2.5, sampleRateHz: 8000 }));
+      await second;
+      expect(component.selected()?.name).toBe('b.flac');
+      expect(component.flacMetadata()?.durationSeconds).toBe(2.5);
+
+      pending[0].resolve(flacSuccess({ durationSeconds: 77 }));
+      await first;
+
+      expect(component.selected()?.name).toBe('b.flac');
+      expect(component.flacMetadata()?.durationSeconds).toBe(2.5);
+      expect(component.error()).toBeNull();
+    });
+
+    it('clears metadata across FLAC → WebM → M4A → MP3 → WAV → OGG transitions', async () => {
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: FlacMetadataService,
+            useValue: {
+              read: () => Promise.resolve(flacSuccess({ durationSeconds: 3 })),
+            },
+          },
+          {
+            provide: WebmMetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: null, durationSeconds: 3 },
+                  exceedsRecommendedDuration: false,
+                } satisfies WebmMetadataResult),
+            },
+          },
+          {
+            provide: M4aMetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: null, durationSeconds: 5 },
+                  exceedsRecommendedDuration: false,
+                } satisfies M4aMetadataResult),
+            },
+          },
+          {
+            provide: Mp3MetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: 'mp3', durationSeconds: 4 },
+                  exceedsRecommendedDuration: false,
+                } satisfies Mp3MetadataResult),
+            },
+          },
+        ],
+      });
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([flacFile('flac-secim.flac')]);
+      expect(component.flacMetadata()).not.toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(webmHeaderBytes(), 'webm-sonra.webm', 'audio/webm')]);
+      expect(component.webmMetadata()).not.toBeNull();
+      expect(component.flacMetadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(mp4FtypBytes(), 'm4a-sonra.m4a', 'audio/mp4')]);
+      expect(component.m4aMetadata()).not.toBeNull();
+      expect(component.flacMetadata()).toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(mp3FrameBytes(), 'mp3-sonra.mp3', 'audio/mpeg')]);
+      expect(component.mp3Metadata()).not.toBeNull();
+      expect(component.flacMetadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(wavBytes(), 'wav-sonra.wav', 'audio/wav')]);
+      expect(component.wavMetadata()).not.toBeNull();
+      expect(component.flacMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      await component.handleFiles([audioFile(oggOpusBytes(), 'ogg-sonra.ogg', 'audio/ogg')]);
+      expect(component.oggMetadata()).not.toBeNull();
+      expect(component.flacMetadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.webmMetadata()).toBeNull();
+
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Codec: Opus');
+      expect(compiled.querySelector('.file-meta')?.textContent).not.toContain('Codec: FLAC');
+      expect(compiled.querySelector('.file-meta')?.textContent).not.toContain('WebM');
+      expect(compiled.querySelector('.file-meta')?.textContent).not.toContain('M4A/MP4');
+      expect(compiled.querySelector('.file-meta')?.textContent).not.toContain('Codec: MP3');
+    });
+
+    it('does not call FlacMetadataService for non-FLAC containers', async () => {
+      const flacReadCalls: File[] = [];
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: FlacMetadataService,
+            useValue: {
+              read: (file: File) => {
+                flacReadCalls.push(file);
+                return Promise.resolve(flacSuccess({ durationSeconds: 1 }));
+              },
+            },
+          },
+          {
+            provide: Mp3MetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: 'mp3', durationSeconds: 1 },
+                  exceedsRecommendedDuration: false,
+                } satisfies Mp3MetadataResult),
+            },
+          },
+          {
+            provide: M4aMetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: null, durationSeconds: 1 },
+                  exceedsRecommendedDuration: false,
+                } satisfies M4aMetadataResult),
+            },
+          },
+          {
+            provide: WebmMetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: null, durationSeconds: 1 },
+                  exceedsRecommendedDuration: false,
+                } satisfies WebmMetadataResult),
+            },
+          },
+        ],
+      });
+
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(wavBytes(), 'yalniz.wav', 'audio/wav')]);
+      await component.handleFiles([audioFile(oggOpusBytes(), 'yalniz.ogg', 'audio/ogg')]);
+      await component.handleFiles([audioFile(mp3FrameBytes(), 'yalniz.mp3', 'audio/mpeg')]);
+      await component.handleFiles([audioFile(mp4FtypBytes(), 'yalniz.m4a', 'audio/mp4')]);
+      await component.handleFiles([audioFile(webmHeaderBytes(), 'yalniz.webm', 'audio/webm')]);
+      expect(flacReadCalls).toHaveLength(0);
+      expect(component.flacMetadata()).toBeNull();
+    });
+
+    it('keeps WebM metadata display intact after WebM selection (WebM regression)', async () => {
+      TestBed.configureTestingModule({
+        providers: [
+          {
+            provide: WebmMetadataService,
+            useValue: {
+              read: () =>
+                Promise.resolve({
+                  ok: true,
+                  metadata: { codec: null, durationSeconds: 65.4 },
+                  exceedsRecommendedDuration: false,
+                } satisfies WebmMetadataResult),
+            },
+          },
+        ],
+      });
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      await component.handleFiles([audioFile(webmHeaderBytes(), 'regresyon.webm', 'audio/webm')]);
+      await fixture.whenStable();
+      const compiled = fixture.nativeElement as HTMLElement;
+
+      expect(component.webmMetadata()).not.toBeNull();
+      expect(component.flacMetadata()).toBeNull();
+      expect(component.m4aMetadata()).toBeNull();
+      expect(component.mp3Metadata()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+      expect(component.oggMetadata()).toBeNull();
+
+      const meta = compiled.querySelector('.file-meta');
+      expect(meta?.textContent).toContain('Container: WebM');
+      expect(meta?.textContent).toContain('Codec: Bilinmiyor');
+      expect(meta?.textContent).toContain('Süre: 1:05');
+      expect(meta?.textContent).not.toContain('Codec: FLAC');
+      expect(compiled.querySelector('.file-note')?.textContent).toContain('WebM bir container');
     });
   });
 });

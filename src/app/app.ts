@@ -7,6 +7,9 @@ import {
 } from './audio-file-validation.service';
 import { OggMetadataService, type OggOpusMetadata } from './ogg-metadata.service';
 import { Mp3MetadataService, type Mp3Metadata } from './mp3-metadata.service';
+import { M4aMetadataService, type M4aMetadata } from './m4a-metadata.service';
+import { WebmMetadataService, type WebmMetadata } from './webm-metadata.service';
+import { FlacMetadataService, type FlacMetadata } from './flac-metadata.service';
 import { WavMetadataService, type WavMetadata } from './wav-metadata.service';
 
 interface SelectedFile {
@@ -40,6 +43,12 @@ export class App {
   readonly oggMetadata = signal<OggOpusMetadata | null>(null);
   /** Yalnız SHHH-013'ten geçmiş MP3 için süre metadata'sı; non-MP3 seçimde null. */
   readonly mp3Metadata = signal<Mp3Metadata | null>(null);
+  /** Yalnız SHHH-013'ten geçmiş M4A/MP4 için metadata; non-MP4 seçimde null. */
+  readonly m4aMetadata = signal<M4aMetadata | null>(null);
+  /** Yalnız SHHH-013'ten geçmiş WebM için metadata; non-WebM seçimde null. */
+  readonly webmMetadata = signal<WebmMetadata | null>(null);
+  /** Yalnız SHHH-013'ten geçmiş FLAC için STREAMINFO metadata'sı; non-FLAC seçimde null. */
+  readonly flacMetadata = signal<FlacMetadata | null>(null);
 
   private dragDepth = 0;
   private validationSeq = 0;
@@ -48,6 +57,9 @@ export class App {
   private readonly wavReader = inject(WavMetadataService);
   private readonly oggReader = inject(OggMetadataService);
   private readonly mp3Reader = inject(Mp3MetadataService);
+  private readonly m4aReader = inject(M4aMetadataService);
+  private readonly webmReader = inject(WebmMetadataService);
+  private readonly flacReader = inject(FlacMetadataService);
 
   async onFileInputChange(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
@@ -133,6 +145,14 @@ export class App {
     return seconds !== null && Number.isFinite(seconds) && seconds >= 0;
   }
 
+  /**
+   * M4A/WebM için güvenilir süre: null/NaN/Infinity/negatif VE sıfır gösterilmez.
+   * HTMLAudioElement `loadedmetadata` tam decode veya ses izi kanıtı sayılmaz.
+   */
+  isUsableM4aDuration(seconds: number | null): seconds is number {
+    return seconds !== null && Number.isFinite(seconds) && seconds > 0;
+  }
+
   private async validateFile(file: File): Promise<void> {
     const seq = ++this.validationSeq;
     const result = await this.validator.validate(file);
@@ -166,6 +186,9 @@ export class App {
         wav: metaResult.metadata,
         ogg: null,
         mp3: null,
+        m4a: null,
+        webm: null,
+        flac: null,
       });
       return;
     }
@@ -185,6 +208,9 @@ export class App {
         wav: null,
         ogg: metaResult.metadata,
         mp3: null,
+        m4a: null,
+        webm: null,
+        flac: null,
       });
       return;
     }
@@ -211,6 +237,96 @@ export class App {
         wav: null,
         ogg: null,
         mp3: metaResult.metadata,
+        m4a: null,
+        webm: null,
+        flac: null,
+      });
+      return;
+    }
+
+    if (result.container === 'mp4') {
+      const metaResult = await this.m4aReader.read(file);
+      if (seq !== this.validationSeq) {
+        return;
+      }
+      if (!metaResult.ok) {
+        // M4A metadata okunamadı: mevcut hata modeli; önceki geçerli seçim korunur.
+        this.errorCode.set(metaResult.code);
+        this.error.set(metaResult.message);
+        return;
+      }
+      const duration = metaResult.metadata.durationSeconds;
+      if (this.isUsableDuration(duration) && duration > RECOMMENDED_MAX_DURATION_SECONDS) {
+        // Tam 20 dakika aşılmaz (yalnız > eşik); sıfır/güvenilir olmayan süre eşiğe girmez.
+        this.errorCode.set('invalid-file');
+        this.error.set(MSG_DURATION_LIMIT);
+        return;
+      }
+      this.commitSelection(file, result.container, result.warning, {
+        wav: null,
+        ogg: null,
+        mp3: null,
+        m4a: metaResult.metadata,
+        webm: null,
+        flac: null,
+      });
+      return;
+    }
+
+    if (result.container === 'webm') {
+      const metaResult = await this.webmReader.read(file);
+      if (seq !== this.validationSeq) {
+        return;
+      }
+      if (!metaResult.ok) {
+        // WebM metadata okunamadı: mevcut hata modeli; önceki geçerli seçim korunur.
+        this.errorCode.set(metaResult.code);
+        this.error.set(metaResult.message);
+        return;
+      }
+      const duration = metaResult.metadata.durationSeconds;
+      if (this.isUsableDuration(duration) && duration > RECOMMENDED_MAX_DURATION_SECONDS) {
+        // Tam 20 dakika aşılmaz (yalnız > eşik); sıfır/güvenilir olmayan süre eşiğe girmez.
+        this.errorCode.set('invalid-file');
+        this.error.set(MSG_DURATION_LIMIT);
+        return;
+      }
+      this.commitSelection(file, result.container, result.warning, {
+        wav: null,
+        ogg: null,
+        mp3: null,
+        m4a: null,
+        webm: metaResult.metadata,
+        flac: null,
+      });
+      return;
+    }
+
+    if (result.container === 'flac') {
+      const metaResult = await this.flacReader.read(file);
+      if (seq !== this.validationSeq) {
+        return;
+      }
+      if (!metaResult.ok) {
+        // FLAC metadata okunamadı: mevcut hata modeli; önceki geçerli seçim korunur.
+        this.errorCode.set(metaResult.code);
+        this.error.set(metaResult.message);
+        return;
+      }
+      const duration = metaResult.metadata.durationSeconds;
+      if (this.isUsableDuration(duration) && duration > RECOMMENDED_MAX_DURATION_SECONDS) {
+        // Tam 20 dakika aşılmaz (yalnız > eşik); null süre eşiğe girmez.
+        this.errorCode.set('invalid-file');
+        this.error.set(MSG_DURATION_LIMIT);
+        return;
+      }
+      this.commitSelection(file, result.container, result.warning, {
+        wav: null,
+        ogg: null,
+        mp3: null,
+        m4a: null,
+        webm: null,
+        flac: metaResult.metadata,
       });
       return;
     }
@@ -219,6 +335,9 @@ export class App {
       wav: null,
       ogg: null,
       mp3: null,
+      m4a: null,
+      webm: null,
+      flac: null,
     });
   }
 
@@ -230,6 +349,9 @@ export class App {
       wav: WavMetadata | null;
       ogg: OggOpusMetadata | null;
       mp3: Mp3Metadata | null;
+      m4a: M4aMetadata | null;
+      webm: WebmMetadata | null;
+      flac: FlacMetadata | null;
     },
   ): void {
     this.errorCode.set(null);
@@ -239,6 +361,9 @@ export class App {
     this.wavMetadata.set(metadata.wav);
     this.oggMetadata.set(metadata.ogg);
     this.mp3Metadata.set(metadata.mp3);
+    this.m4aMetadata.set(metadata.m4a);
+    this.webmMetadata.set(metadata.webm);
+    this.flacMetadata.set(metadata.flac);
     this.selected.set({ name: file.name, size: file.size, container });
   }
 }

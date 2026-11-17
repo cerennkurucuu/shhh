@@ -69,6 +69,44 @@
               }
             </span>
           </span>
+        } @else if (m4aMetadata(); as meta) {
+          <span class="file-meta">
+            <span class="meta-container">Container: M4A/MP4</span>
+            <span class="meta-codec">Codec: Bilinmiyor</span>
+            <span class="meta-duration">
+              @if (isUsableM4aDuration(meta.durationSeconds)) {
+                Süre: {{ formatDuration(meta.durationSeconds) }}
+              } @else {
+                Süre bilinmiyor
+              }
+            </span>
+          </span>
+        } @else if (webmMetadata(); as meta) {
+          <span class="file-meta">
+            <span class="meta-container">Container: WebM</span>
+            <span class="meta-codec">Codec: Bilinmiyor</span>
+            <span class="meta-duration">
+              @if (isUsableM4aDuration(meta.durationSeconds)) {
+                Süre: {{ formatDuration(meta.durationSeconds) }}
+              } @else {
+                Süre bilinmiyor
+              }
+            </span>
+          </span>
+        } @else if (flacMetadata(); as meta) {
+          <span class="file-meta">
+            <span class="meta-codec">Codec: FLAC</span>
+            <span class="meta-duration">
+              @if (isUsableDuration(meta.durationSeconds)) {
+                Süre: {{ formatDuration(meta.durationSeconds) }}
+              } @else {
+                Süre bilinmiyor
+              }
+            </span>
+            <span class="meta-rate">{{ formatSampleRate(meta.sampleRateHz) }}</span>
+            <span class="meta-channels">{{ formatOggChannels(meta.channels) }}</span>
+            <span class="meta-bits">{{ meta.bitsPerSample }} bit</span>
+          </span>
         }
       </p>
       @if (wavMetadata()) {
@@ -88,6 +126,26 @@
           Codec ve süre yalnız tarayıcı metadata okumasından geldi; dosyanın tamamı çözülmedi ve
           süre tahmini kullanılmadı. Ses yazıya dönüştürme özelliği geliştirme aşamasında; bu
           aşamada transkripsiyon yapılmaz.
+        </p>
+      } @else if (m4aMetadata()) {
+        <p class="file-note">
+          Container, codec ve süre yalnız tarayıcı metadata okumasından geldi; M4A bir
+          container'dır, codec (ör. AAC) doğrulanmadı ve bilinmiyor. Dosyanın tamamı çözülmedi; ses
+          izi loadedmetadata ile kanıtlanmaz. Ses yazıya dönüştürme özelliği geliştirme aşamasında;
+          bu aşamada transkripsiyon yapılmaz.
+        </p>
+      } @else if (webmMetadata()) {
+        <p class="file-note">
+          Container, codec ve süre yalnız tarayıcı metadata okumasından geldi; WebM bir
+          container'dır, codec (ör. Opus/Vorbis) doğrulanmadı ve bilinmiyor. Dosyanın tamamı
+          çözülmedi; ses izi loadedmetadata ile kanıtlanmaz. Ses yazıya dönüştürme özelliği
+          geliştirme aşamasında; bu aşamada transkripsiyon yapılmaz.
+        </p>
+      } @else if (flacMetadata()) {
+        <p class="file-note">
+          Codec, süre ve ses özellikleri yalnız FLAC STREAMINFO başlığından okundu; başlığın geçerli
+          olması ses karelerinin varlığını veya gerçek decode başarısını kanıtlamaz. Ses yazıya
+          dönüştürme özelliği geliştirme aşamasında; bu aşamada transkripsiyon yapılmaz.
         </p>
       } @else {
         <p class="file-note">
