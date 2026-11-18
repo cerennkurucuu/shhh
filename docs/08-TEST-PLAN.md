@@ -26,7 +26,7 @@ Her test: kimlik, ilgili R gereksinimi/Issue, fixture lisansı, önkoşul, adım
 | T15 ağ | model/statik allowlist | POST fallback, log/analytics kontrolü | ses/metin dışa çıkmaz; kanıt yoksa garanti yok |
 | T16 UI | açık/koyu, 320px, desktop | 200% zoom, uzun metin, reduced motion | AA kontrast, klavye/ekran okuyucu, odak |
 | T17 clipboard | kullanıcı eylemi | permission denial/insecure context | gerçek başarı; fallback erişilebilir |
-| T18 performans | kısa/orta seri kayıt | düşük RAM, termal, 50MB/20dk çevresi | peak RAM/CPU/süre raporu; limitler ölçümle |
+| T18 performans | kısa/orta seri kayıt | düşük RAM, termal, 50 MB/600 sn ürün sınırı, gerçek PCM working-set bütçesi | peak RAM/CPU/süre raporu; 600 sn kabul, 601 sn ret; bellek limitinde güvenli ret |
 
 ## Katmanlar
 

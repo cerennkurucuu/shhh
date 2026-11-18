@@ -32,7 +32,7 @@ Bellek bounded decode/segment penceresiyle sınırlanır; çözümleyici streami
 
 ## Ön limit ve ret politikası
 
-50 MB ve 20 dakika ölçüm bekleyen önerilerdir. Byte sınırı tam dosya açılmadan, süre sınırı güvenli metadata sonrası kontrol edilir. Bilinmeyen süre destek garantisi değildir. Çok büyük dosya zorla decode edilmez. 90 dakika/40 GB v1 kabul kriteri değildir.
+50 MB dosya sınırı ve 600 saniye (10 dakika) ses sınırı v1 ürün kurallarıdır; 600 saniye kabul, 601 saniye ret edilir. Dosya boyutu tam dosya açılmadan kontrol edilir. Süre metadatası bilinmiyorsa ses otomatik geçerli sayılmaz; yerel Blob URL üzerinden mevcut HTMLAudioElement metadata probu denenir. Süre hâlâ bilinmiyorsa örnekleme hızı ve kanal sayısıyla 600 saniyelik üst sınır için güvenli çalışma kümesi tahmini yapılabiliyorsa decode edilir ve ancak decode sonrası gerçek süre doğrulanınca kabul edilir. Bu tahmin yapılamıyorsa dönüşüm reddedilir. Metadata biliniyor olsa da decode sonrası gerçek süre yeniden ölçülür ve 600 saniyeyi aşan ses reddedilir. Kullanıcıdan elle bölme istenmez; otomatik segmentleme ileriki kapsamdır. 90 dakika/40 GB v1 kabul kriteri değildir.
 
 ## İzlenebilirlik
 

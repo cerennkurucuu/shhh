@@ -219,7 +219,7 @@ describe('Mp3MetadataService', () => {
     expect(onlyLog().loadCalls).toBeGreaterThanOrEqual(1);
   });
 
-  it('reports a reliable duration over 20 minutes as a separate flag', async () => {
+  it('reports a reliable duration over 10 minutes as a separate flag', async () => {
     const over = MP3_RECOMMENDED_MAX_DURATION_SECONDS + 1;
     configureNextAudio({ duration: over, fire: 'loadedmetadata' });
 
@@ -232,7 +232,7 @@ describe('Mp3MetadataService', () => {
     }
   });
 
-  it('does not flag a duration exactly at the 20-minute recommendation', async () => {
+  it('does not flag a duration exactly at the 10-minute limit', async () => {
     configureNextAudio({
       duration: MP3_RECOMMENDED_MAX_DURATION_SECONDS,
       fire: 'loadedmetadata',

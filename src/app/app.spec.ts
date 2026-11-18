@@ -453,7 +453,7 @@ describe('App', () => {
       expect(component.formatDuration(1200)).toBe('20:00');
     });
 
-    it('rejects a WAV longer than 20 minutes with a clear error and keeps the previous selection', async () => {
+    it('rejects a WAV longer than 10 minutes with a clear error and keeps the previous selection', async () => {
       const fixture = createFixture();
       const component = fixture.componentInstance;
 
@@ -465,12 +465,12 @@ describe('App', () => {
       await fixture.whenStable();
       const compiled = fixture.nativeElement as HTMLElement;
 
-      expect(component.error()).toContain('20 dakika');
+      expect(component.error()).toContain('10 dakika');
       expect(component.errorCode()).toBe('invalid-file');
       expect(component.selected()).toEqual({ name: 'onceki.wav', size: 60, container: 'wav' });
       expect(component.wavMetadata()).toEqual(previousMeta);
       expect(compiled.querySelector('.error-code')?.textContent).toBe('invalid-file');
-      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(600);
     });
 
     it('rejects an over-long WAV on first selection without selecting it', async () => {
@@ -479,9 +479,76 @@ describe('App', () => {
 
       await component.handleFiles([audioFile(longDurationWavBytes(), 'ilk-uzun.wav', 'audio/wav')]);
 
-      expect(component.error()).toContain('20 dakika');
+      expect(component.error()).toContain('10 dakika');
       expect(component.selected()).toBeNull();
       expect(component.wavMetadata()).toBeNull();
+      expect(component.file()).toBeNull();
+    });
+
+    it('keeps 1200-second metadata truthful as 20:00 while rejecting the file', async () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      const longFile = audioFile(longDurationWavBytes(1200), 'yirmi-dakika.wav', 'audio/wav');
+      const metadata = await TestBed.inject(WavMetadataService).read(longFile);
+
+      expect(metadata.ok).toBe(true);
+      if (metadata.ok) {
+        expect(component.formatDuration(metadata.metadata.durationSeconds ?? 0)).toBe('20:00');
+        expect(metadata.metadata.durationSeconds).toBe(1200);
+      }
+      await component.handleFiles([longFile]);
+      expect(component.error()).toContain('10 dakika');
+      expect(component.selected()).toBeNull();
+      expect(component.wavMetadata()).toBeNull();
+    });
+
+    it('SHHH-015 Parça 4: accepts 599 s and 600 s, rejects 601 s, keeps the previous selection', async () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+
+      // 599 sn → kabul.
+      await component.handleFiles([audioFile(longDurationWavBytes(599), '599.wav', 'audio/wav')]);
+      await fixture.whenStable();
+      expect(component.error()).toBeNull();
+      expect(component.selected()?.name).toBe('599.wav');
+      expect(component.wavMetadata()?.durationSeconds).toBe(599);
+
+      // Tam 600 sn → kabul (eşik aşılmış sayılmaz).
+      await component.handleFiles([audioFile(longDurationWavBytes(600), '600.wav', 'audio/wav')]);
+      await fixture.whenStable();
+      expect(component.error()).toBeNull();
+      expect(component.selected()?.name).toBe('600.wav');
+      expect(component.wavMetadata()?.durationSeconds).toBe(600);
+
+      // 601 sn → ret; yeni reddedilen dosya önceki geçerli seçimi bozmaz.
+      await component.handleFiles([audioFile(longDurationWavBytes(601), '601.wav', 'audio/wav')]);
+      await fixture.whenStable();
+      expect(component.error()).toContain('10 dakika');
+      expect(component.errorCode()).toBe('invalid-file');
+      expect(component.selected()?.name).toBe('600.wav');
+      expect(component.wavMetadata()?.durationSeconds).toBe(600);
+      expect(component.file()?.name).toBe('600.wav');
+    });
+
+    it('keeps the 50 MB file size limit unchanged (SHHH-015 Parça 4)', async () => {
+      const fixture = createFixture();
+      const component = fixture.componentInstance;
+      // Kontrollü sahte dosya: tam tahsis yok; boyut sınırı okumadan önce uygulanır.
+      const oversize = {
+        name: 'buyuk.wav',
+        type: 'audio/wav',
+        size: 50_000_001,
+        slice: () => {
+          throw new Error('slice çağrılmamalı');
+        },
+      } as unknown as File;
+
+      await component.handleFiles([oversize]);
+      await fixture.whenStable();
+
+      expect(component.error()).toContain('50 MB');
+      expect(component.errorCode()).toBe('invalid-file');
+      expect(component.selected()).toBeNull();
       expect(component.file()).toBeNull();
     });
 
@@ -1208,7 +1275,7 @@ describe('App', () => {
       }
     });
 
-    it('rejects an MP3 longer than 20 minutes with the existing error model', async () => {
+    it('rejects an MP3 longer than 10 minutes with the existing error model', async () => {
       mockMp3Read(() => mp3Success(RECOMMENDED_MAX_DURATION_SECONDS + 1));
       const fixture = createFixture();
       const component = fixture.componentInstance;
@@ -1218,7 +1285,7 @@ describe('App', () => {
       await fixture.whenStable();
       const compiled = fixture.nativeElement as HTMLElement;
 
-      expect(component.error()).toContain('20 dakika');
+      expect(component.error()).toContain('10 dakika');
       expect(component.errorCode()).toBe('invalid-file');
       expect(component.selected()).toEqual({ name: 'guvenli.wav', size: 60, container: 'wav' });
       expect(component.mp3Metadata()).toBeNull();
@@ -1226,7 +1293,7 @@ describe('App', () => {
       expect(compiled.querySelector('.error-code')?.textContent).toBe('invalid-file');
     });
 
-    it('accepts an MP3 of exactly 20 minutes (boundary is not exceeded)', async () => {
+    it('accepts an MP3 of exactly 10 minutes (boundary is not exceeded)', async () => {
       mockMp3Read(() => mp3Success(RECOMMENDED_MAX_DURATION_SECONDS));
       const fixture = createFixture();
       const component = fixture.componentInstance;
@@ -1237,9 +1304,9 @@ describe('App', () => {
 
       expect(component.error()).toBeNull();
       expect(component.selected()?.name).toBe('tam.mp3');
-      expect(component.mp3Metadata()?.durationSeconds).toBe(1200);
-      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 20:00');
-      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+      expect(component.mp3Metadata()?.durationSeconds).toBe(600);
+      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 10:00');
+      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(600);
     });
 
     it('keeps the previous file and metadata when MP3 metadata read fails', async () => {
@@ -1595,7 +1662,7 @@ describe('App', () => {
       }
     });
 
-    it('rejects an M4A longer than 20 minutes with the existing error model', async () => {
+    it('rejects an M4A longer than 10 minutes with the existing error model', async () => {
       mockM4aRead(() => m4aSuccess(RECOMMENDED_MAX_DURATION_SECONDS + 1));
       const fixture = createFixture();
       const component = fixture.componentInstance;
@@ -1605,7 +1672,7 @@ describe('App', () => {
       await fixture.whenStable();
       const compiled = fixture.nativeElement as HTMLElement;
 
-      expect(component.error()).toContain('20 dakika');
+      expect(component.error()).toContain('10 dakika');
       expect(component.errorCode()).toBe('invalid-file');
       expect(component.selected()).toEqual({ name: 'guvenli.wav', size: 60, container: 'wav' });
       expect(component.m4aMetadata()).toBeNull();
@@ -1613,7 +1680,7 @@ describe('App', () => {
       expect(compiled.querySelector('.error-code')?.textContent).toBe('invalid-file');
     });
 
-    it('accepts an M4A of exactly 20 minutes (boundary is not exceeded)', async () => {
+    it('accepts an M4A of exactly 10 minutes (boundary is not exceeded)', async () => {
       mockM4aRead(() => m4aSuccess(RECOMMENDED_MAX_DURATION_SECONDS));
       const fixture = createFixture();
       const component = fixture.componentInstance;
@@ -1624,9 +1691,9 @@ describe('App', () => {
 
       expect(component.error()).toBeNull();
       expect(component.selected()?.name).toBe('tam.m4a');
-      expect(component.m4aMetadata()?.durationSeconds).toBe(1200);
-      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 20:00');
-      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+      expect(component.m4aMetadata()?.durationSeconds).toBe(600);
+      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 10:00');
+      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(600);
     });
 
     it('keeps the previous file and metadata when M4A metadata read fails', async () => {
@@ -2028,7 +2095,7 @@ describe('App', () => {
       }
     });
 
-    it('rejects a WebM longer than 20 minutes with the existing error model', async () => {
+    it('rejects a WebM longer than 10 minutes with the existing error model', async () => {
       mockWebmRead(() => webmSuccess(RECOMMENDED_MAX_DURATION_SECONDS + 1));
       const fixture = createFixture();
       const component = fixture.componentInstance;
@@ -2038,7 +2105,7 @@ describe('App', () => {
       await fixture.whenStable();
       const compiled = fixture.nativeElement as HTMLElement;
 
-      expect(component.error()).toContain('20 dakika');
+      expect(component.error()).toContain('10 dakika');
       expect(component.errorCode()).toBe('invalid-file');
       expect(component.selected()).toEqual({ name: 'guvenli.wav', size: 60, container: 'wav' });
       expect(component.webmMetadata()).toBeNull();
@@ -2046,7 +2113,7 @@ describe('App', () => {
       expect(compiled.querySelector('.error-code')?.textContent).toBe('invalid-file');
     });
 
-    it('accepts a WebM of exactly 20 minutes (boundary is not exceeded)', async () => {
+    it('accepts a WebM of exactly 10 minutes (boundary is not exceeded)', async () => {
       mockWebmRead(() => webmSuccess(RECOMMENDED_MAX_DURATION_SECONDS));
       const fixture = createFixture();
       const component = fixture.componentInstance;
@@ -2057,9 +2124,9 @@ describe('App', () => {
 
       expect(component.error()).toBeNull();
       expect(component.selected()?.name).toBe('tam.webm');
-      expect(component.webmMetadata()?.durationSeconds).toBe(1200);
-      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 20:00');
-      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+      expect(component.webmMetadata()?.durationSeconds).toBe(600);
+      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 10:00');
+      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(600);
     });
 
     it('keeps the previous file and metadata when WebM metadata read fails', async () => {
@@ -2527,7 +2594,7 @@ describe('App', () => {
       }
     });
 
-    it('accepts a FLAC of exactly 20 minutes (boundary is not exceeded)', async () => {
+    it('accepts a FLAC of exactly 10 minutes (boundary is not exceeded)', async () => {
       mockFlacRead(() => flacSuccess({ durationSeconds: RECOMMENDED_MAX_DURATION_SECONDS }));
       const fixture = createFixture();
       const component = fixture.componentInstance;
@@ -2538,12 +2605,12 @@ describe('App', () => {
 
       expect(component.error()).toBeNull();
       expect(component.selected()?.name).toBe('tam.flac');
-      expect(component.flacMetadata()?.durationSeconds).toBe(1200);
-      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 20:00');
-      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+      expect(component.flacMetadata()?.durationSeconds).toBe(600);
+      expect(compiled.querySelector('.file-meta')?.textContent).toContain('Süre: 10:00');
+      expect(RECOMMENDED_MAX_DURATION_SECONDS).toBe(600);
     });
 
-    it('rejects a FLAC longer than 20 minutes with the existing error model', async () => {
+    it('rejects a FLAC longer than 10 minutes with the existing error model', async () => {
       mockFlacRead(() => flacSuccess({ durationSeconds: RECOMMENDED_MAX_DURATION_SECONDS + 1 }));
       const fixture = createFixture();
       const component = fixture.componentInstance;
@@ -2553,7 +2620,7 @@ describe('App', () => {
       await fixture.whenStable();
       const compiled = fixture.nativeElement as HTMLElement;
 
-      expect(component.error()).toContain('20 dakika');
+      expect(component.error()).toContain('10 dakika');
       expect(component.errorCode()).toBe('invalid-file');
       expect(component.selected()).toEqual({ name: 'guvenli.wav', size: 60, container: 'wav' });
       expect(component.flacMetadata()).toBeNull();

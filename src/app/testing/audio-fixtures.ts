@@ -59,7 +59,7 @@ export function wavBytes(dataSize = 16): Uint8Array {
 }
 
 /**
- * 20 dakika eşiğini aşan süre için WAV: 1 Hz / 8-bit / mono, 1201 bayt veri → 1201 sn.
+ * 10 dakika eşiğini aşan süre için WAV: 1 Hz / 8-bit / mono, 1201 bayt veri → 1201 sn.
  * Küçük fixture; büyük gerçekçi dosya tahsis edilmez.
  */
 export function longDurationWavBytes(dataSize = 1201): Uint8Array {

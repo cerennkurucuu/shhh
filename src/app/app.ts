@@ -13,6 +13,7 @@ import { WebmMetadataService, type WebmMetadata } from './webm-metadata.service'
 import { WebmAudioTrackService } from './webm-audio-track.service';
 import { FlacMetadataService, type FlacMetadata } from './flac-metadata.service';
 import { WavMetadataService, type WavMetadata } from './wav-metadata.service';
+import { RECOMMENDED_MAX_DURATION_SECONDS } from './media-duration-probe';
 
 interface SelectedFile {
   readonly name: string;
@@ -20,10 +21,14 @@ interface SelectedFile {
   readonly container: ContainerId;
 }
 
-/** docs/02: 20 dakika öneri eşiği; doğrulanmış cihaz sınırı değildir. */
-export const RECOMMENDED_MAX_DURATION_SECONDS = 20 * 60;
+/**
+ * docs/02 (SHHH-015 Parça 4): KESİN 10 dakika (600 sn) ürün sınırı.
+ * Merkezî tanım media-duration-probe'da; buradan yeniden dışa aktarılır
+ * (app.spec dahil mevcut içe aktarmalar korunur).
+ */
+export { RECOMMENDED_MAX_DURATION_SECONDS };
 
-const MSG_DURATION_LIMIT = 'Kayıt 20 dakika sınırından uzun. Bu sürümde kısa kayıtlar işleniyor.';
+const MSG_DURATION_LIMIT = 'Kayıt 10 dakika sınırından uzun. Bu sürümde kısa kayıtlar işleniyor.';
 const MSG_TRACK_UNCERTAIN =
   'Ses izi (hdlr soun) tespit edilemedi; dosya sadece başlık kontrolü ile değerlendirildi.';
 const MSG_WEBM_TRACK_UNCERTAIN =
@@ -237,7 +242,7 @@ export class App {
       }
       const duration = metaResult.metadata.durationSeconds;
       if (this.isUsableDuration(duration) && duration > RECOMMENDED_MAX_DURATION_SECONDS) {
-        // Tam 20 dakika aşılmış sayılmaz (yalnız > eşik).
+        // Tam 600 saniye aşılmış sayılmaz (yalnız > eşik; 600 kabul, 601 ret).
         this.errorCode.set('invalid-file');
         this.error.set(MSG_DURATION_LIMIT);
         return;
@@ -286,7 +291,7 @@ export class App {
       // M4A süresi kontrolü ve commitSelection continu.
       const duration = metaResult.metadata.durationSeconds;
       if (this.isUsableDuration(duration) && duration > RECOMMENDED_MAX_DURATION_SECONDS) {
-        // Tam 20 dakika aşılmaz (yalnız > eşik); sıfır/güvenilir olmayan süre eşiğe girmez.
+        // Tam 600 saniye aşılmaz (yalnız > eşik); sıfır/güvenilir olmayan süre eşiğe girmez.
         this.errorCode.set('invalid-file');
         this.error.set(MSG_DURATION_LIMIT);
         return;
@@ -340,7 +345,7 @@ export class App {
       // WebM süresi kontrolü ve commitSelection continu.
       const duration = metaResult.metadata.durationSeconds;
       if (this.isUsableDuration(duration) && duration > RECOMMENDED_MAX_DURATION_SECONDS) {
-        // Tam 20 dakika aşılmaz (yalnız > eşik); sıfır/güvenilir olmayan süre eşiğe girmez.
+        // Tam 600 saniye aşılmaz (yalnız > eşik); sıfır/güvenilir olmayan süre eşiğe girmez.
         this.errorCode.set('invalid-file');
         this.error.set(MSG_DURATION_LIMIT);
         return;
@@ -376,7 +381,7 @@ export class App {
       }
       const duration = metaResult.metadata.durationSeconds;
       if (this.isUsableDuration(duration) && duration > RECOMMENDED_MAX_DURATION_SECONDS) {
-        // Tam 20 dakika aşılmaz (yalnız > eşik); null süre eşiğe girmez.
+        // Tam 600 saniye aşılmaz (yalnız > eşik); null süre eşiğe girmez.
         this.errorCode.set('invalid-file');
         this.error.set(MSG_DURATION_LIMIT);
         return;

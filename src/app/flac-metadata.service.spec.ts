@@ -161,21 +161,21 @@ describe('FlacMetadataService', () => {
     }
   });
 
-  it('accepts exactly 20 minutes (boundary is not exceeded)', async () => {
-    // 1200 * 44100 = 52_920_000
-    const file = flacFile(buildFlac({ sampleRateHz: 44100, totalSamples: 52_920_000 }));
+  it('accepts exactly 10 minutes (boundary is not exceeded)', async () => {
+    // 600 * 44100 = 26_460_000
+    const file = flacFile(buildFlac({ sampleRateHz: 44100, totalSamples: 26_460_000 }));
 
     const result = await service.read(file);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.metadata.durationSeconds).toBe(1200);
+      expect(result.metadata.durationSeconds).toBe(600);
       expect(result.exceedsRecommendedDuration).toBe(false);
-      expect(FLAC_RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+      expect(FLAC_RECOMMENDED_MAX_DURATION_SECONDS).toBe(600);
     }
   });
 
-  it('flags a reliable duration over 20 minutes', async () => {
+  it('flags a reliable duration over 10 minutes', async () => {
     // 1201 * 44100 = 52_964_100
     const file = flacFile(buildFlac({ sampleRateHz: 44100, totalSamples: 52_964_100 }));
 

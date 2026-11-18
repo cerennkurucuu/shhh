@@ -9,7 +9,7 @@ import {
 /** HTMLAudioElement metadata yüklemesi için üst sınır (ms); aşarsa süre null sayılır. */
 export const MP3_METADATA_TIMEOUT_MS = MEDIA_METADATA_TIMEOUT_MS;
 
-/** docs/02: 20 dakika öneri eşiği; doğrulanmış cihaz sınırı değildir. */
+/** docs/02 (SHHH-015 Parça 4): kesin 600 sn sınırı; merkezî tanım media-duration-probe'da. */
 export const MP3_RECOMMENDED_MAX_DURATION_SECONDS = RECOMMENDED_MAX_DURATION_SECONDS;
 
 export type Mp3MetadataErrorCode = 'invalid-file' | 'unsupported-codec';

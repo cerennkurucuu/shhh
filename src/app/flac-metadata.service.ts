@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
+import { RECOMMENDED_MAX_DURATION_SECONDS } from './media-duration-probe';
 
 /** FLAC başlık bütçesi: 'fLaC' (4) + blok başlığı (4) + STREAMINFO (34) = 42 bayt. */
 export const FLAC_HEADER_READ_BYTES = 42;
 
-/** docs/02: 20 dakika öneri eşiği; doğrulanmış cihaz sınırı değildir. */
-export const FLAC_RECOMMENDED_MAX_DURATION_SECONDS = 20 * 60;
+/** docs/02 (SHHH-015 Parça 4): kesin 600 sn sınırı; merkezî tanım media-duration-probe'da. */
+export const FLAC_RECOMMENDED_MAX_DURATION_SECONDS = RECOMMENDED_MAX_DURATION_SECONDS;
 
 export type FlacMetadataErrorCode = 'invalid-file' | 'unsupported-codec';
 

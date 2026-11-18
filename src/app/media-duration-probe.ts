@@ -1,8 +1,13 @@
 /** HTMLAudioElement metadata yüklemesi için ortak üst sınır (ms). */
 export const MEDIA_METADATA_TIMEOUT_MS = 5_000;
 
-/** docs/02: 20 dakika öneri eşiği; doğrulanmış cihaz sınırı değildir. */
-export const RECOMMENDED_MAX_DURATION_SECONDS = 20 * 60;
+/**
+ * docs/02 (SHHH-015 Parça 4): KESİN 10 dakika (600 sn) ürün sınırı.
+ * 600 sn kabul; 600 sn'yi aşan kayıt reddedilir. Doğrulanmış cihaz sınırı
+ * değildir. Merkezî tanım: app.ts ve mp3/m4a/webm/flac servisleri bu
+ * sabitten türetir.
+ */
+export const RECOMMENDED_MAX_DURATION_SECONDS = 10 * 60;
 
 /** Yalnız sonlu ve negatif olmayan süreler kabul edilir; Infinity/NaN/reddedilir. */
 export function normalizeDuration(value: number): number | null {

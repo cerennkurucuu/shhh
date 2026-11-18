@@ -270,7 +270,7 @@ describe('WebmMetadataService', () => {
     }
   });
 
-  it('reports a reliable duration over 20 minutes as a separate flag', async () => {
+  it('reports a reliable duration over 10 minutes as a separate flag', async () => {
     const over = WEBM_RECOMMENDED_MAX_DURATION_SECONDS + 1;
     configureNextAudio({ duration: over, fire: 'loadedmetadata' });
 
@@ -283,7 +283,7 @@ describe('WebmMetadataService', () => {
     }
   });
 
-  it('does not flag a duration exactly at the 20-minute recommendation', async () => {
+  it('does not flag a duration exactly at the 10-minute limit', async () => {
     configureNextAudio({
       duration: WEBM_RECOMMENDED_MAX_DURATION_SECONDS,
       fire: 'loadedmetadata',
@@ -293,10 +293,10 @@ describe('WebmMetadataService', () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.metadata.durationSeconds).toBe(1200);
+      expect(result.metadata.durationSeconds).toBe(600);
       expect(result.exceedsRecommendedDuration).toBe(false);
     }
-    expect(WEBM_RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+    expect(WEBM_RECOMMENDED_MAX_DURATION_SECONDS).toBe(600);
   });
 
   it('rejects a missing file without creating a Blob URL', async () => {

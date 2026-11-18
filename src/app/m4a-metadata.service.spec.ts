@@ -258,7 +258,7 @@ describe('M4aMetadataService', () => {
     }
   });
 
-  it('reports a reliable duration over 20 minutes as a separate flag', async () => {
+  it('reports a reliable duration over 10 minutes as a separate flag', async () => {
     const over = M4A_RECOMMENDED_MAX_DURATION_SECONDS + 1;
     configureNextAudio({ duration: over, fire: 'loadedmetadata' });
 
@@ -271,7 +271,7 @@ describe('M4aMetadataService', () => {
     }
   });
 
-  it('does not flag a duration exactly at the 20-minute recommendation', async () => {
+  it('does not flag a duration exactly at the 10-minute limit', async () => {
     configureNextAudio({
       duration: M4A_RECOMMENDED_MAX_DURATION_SECONDS,
       fire: 'loadedmetadata',
@@ -281,10 +281,10 @@ describe('M4aMetadataService', () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.metadata.durationSeconds).toBe(1200);
+      expect(result.metadata.durationSeconds).toBe(600);
       expect(result.exceedsRecommendedDuration).toBe(false);
     }
-    expect(M4A_RECOMMENDED_MAX_DURATION_SECONDS).toBe(1200);
+    expect(M4A_RECOMMENDED_MAX_DURATION_SECONDS).toBe(600);
   });
 
   it('rejects a missing file without creating a Blob URL', async () => {

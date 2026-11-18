@@ -22,7 +22,7 @@ Tek sayfada ses ekle → doğrula → modeli hazırla → yerel transkripsiyon �
 
 ## v1.0 kapsamı
 
-Android PWA ve kurulumsuz normal web, Türkçe öncelikli çok dilli Whisper, otomatik/manüel dil seçimi, sıralı çoklu ses, duraklatma/checkpoint ve geçici yerel oturum. Sistem teması, erişilebilir mobil arayüz ve gerçek ilerleme. İlk hedef kısa/orta kayıtlardır. 50 MB/20 dakika ön değerlendirme önerisidir; doğrulanmış cihaz sınırı değildir.
+Android PWA ve kurulumsuz normal web, Türkçe öncelikli çok dilli Whisper, otomatik/manüel dil seçimi, sıralı çoklu ses, duraklatma/checkpoint ve geçici yerel oturum. Sistem teması, erişilebilir mobil arayüz ve gerçek ilerleme. İlk sürümde dosya en fazla 50 MB ve ses en fazla 600 saniye (10 dakika) olabilir; 600 saniye kabul, 601 saniye ret edilir. Bu ürün sınırları hedef cihazlarda performans garantisi vermez. Kullanıcı sesleri elle bölmez; ileride otomatik segmentleme değerlendirilir.
 
 ## Ücretsiz çalışma ilkesi
 
