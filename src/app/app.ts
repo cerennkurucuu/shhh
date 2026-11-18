@@ -5,10 +5,12 @@ import {
   type AudioErrorCode,
   type ContainerId,
 } from './audio-file-validation.service';
+import { Mp4AudioTrackService } from './mp4-audio-track.service';
 import { OggMetadataService, type OggOpusMetadata } from './ogg-metadata.service';
 import { Mp3MetadataService, type Mp3Metadata } from './mp3-metadata.service';
 import { M4aMetadataService, type M4aMetadata } from './m4a-metadata.service';
 import { WebmMetadataService, type WebmMetadata } from './webm-metadata.service';
+import { WebmAudioTrackService } from './webm-audio-track.service';
 import { FlacMetadataService, type FlacMetadata } from './flac-metadata.service';
 import { WavMetadataService, type WavMetadata } from './wav-metadata.service';
 
@@ -22,6 +24,11 @@ interface SelectedFile {
 export const RECOMMENDED_MAX_DURATION_SECONDS = 20 * 60;
 
 const MSG_DURATION_LIMIT = 'Kayıt 20 dakika sınırından uzun. Bu sürümde kısa kayıtlar işleniyor.';
+const MSG_TRACK_UNCERTAIN =
+  'Ses izi (hdlr soun) tespit edilemedi; dosya sadece başlık kontrolü ile değerlendirildi.';
+const MSG_WEBM_TRACK_UNCERTAIN =
+  'Ses izi (TrackType) doğrulanamadı; dosya yalnızca başlık kontrolü ile değerlendirildi.';
+const MSG_WEBM_NO_TRACK = 'Bu WebM dosyasında ses izi bulunamadı.';
 
 @Component({
   selector: 'app-root',
@@ -58,7 +65,9 @@ export class App {
   private readonly oggReader = inject(OggMetadataService);
   private readonly mp3Reader = inject(Mp3MetadataService);
   private readonly m4aReader = inject(M4aMetadataService);
+  private readonly mp4Tracker = inject(Mp4AudioTrackService);
   private readonly webmReader = inject(WebmMetadataService);
+  private readonly webmTracker = inject(WebmAudioTrackService);
   private readonly flacReader = inject(FlacMetadataService);
 
   async onFileInputChange(event: Event): Promise<void> {
@@ -255,6 +264,26 @@ export class App {
         this.error.set(metaResult.message);
         return;
       }
+      const trackResult = await this.mp4Tracker.hasAudioTrack(file);
+      if (seq !== this.validationSeq) {
+        return;
+      }
+      if (trackResult === null) {
+        // Ses izi belirsiz; codec/decode yapılmadığını dürüstçe belirt.
+        // Uyarı ayarla; commitSelection bu uyarıyı korumalı (aşağıda birleştirilir).
+        this.warning.set(MSG_TRACK_UNCERTAIN);
+      }
+      if (trackResult === false) {
+        // Ses izi bulunamadı; dosyayı hata modeliyle reddet.
+        // commitSelection CAĞIRMA; önceki geçerli dosya ve metadata korunur.
+        this.errorCode.set('unsupported-codec');
+        this.error.set(
+          'Bu dosyada ses izi bulunamadı. Yalnızca ses izi içermeyen MP4/M4A dosyaları desteklenmiyor.',
+        );
+        return;
+      }
+      // trackResult === true Fall-through:
+      // M4A süresi kontrolü ve commitSelection continu.
       const duration = metaResult.metadata.durationSeconds;
       if (this.isUsableDuration(duration) && duration > RECOMMENDED_MAX_DURATION_SECONDS) {
         // Tam 20 dakika aşılmaz (yalnız > eşik); sıfır/güvenilir olmayan süre eşiğe girmez.
@@ -262,7 +291,14 @@ export class App {
         this.error.set(MSG_DURATION_LIMIT);
         return;
       }
-      this.commitSelection(file, result.container, result.warning, {
+      // Belirsizlik uyarısı, commitSelection'ın warning sinyalini ezmemeli.
+      const committedWarning =
+        trackResult === null
+          ? result.warning === null
+            ? MSG_TRACK_UNCERTAIN
+            : `${result.warning} ${MSG_TRACK_UNCERTAIN}`
+          : result.warning;
+      this.commitSelection(file, result.container, committedWarning, {
         wav: null,
         ogg: null,
         mp3: null,
@@ -284,6 +320,24 @@ export class App {
         this.error.set(metaResult.message);
         return;
       }
+      const trackResult = await this.webmTracker.hasAudioTrack(file);
+      if (seq !== this.validationSeq) {
+        return;
+      }
+      if (trackResult === null) {
+        // Ses izi kesin doğrulanamadı; kesin ifade kullanılmaz.
+        // Uyarı ayarla; commitSelection bu uyarıyı korumalı (aşağıda birleştirilir).
+        this.warning.set(MSG_WEBM_TRACK_UNCERTAIN);
+      }
+      if (trackResult === false) {
+        // Ses izi bulunamadı; dosyayı hata modeliyle reddet.
+        // commitSelection CAĞIRMA; önceki geçerli dosya ve metadata korunur.
+        this.errorCode.set('unsupported-codec');
+        this.error.set(MSG_WEBM_NO_TRACK);
+        return;
+      }
+      // trackResult === true Fall-through:
+      // WebM süresi kontrolü ve commitSelection continu.
       const duration = metaResult.metadata.durationSeconds;
       if (this.isUsableDuration(duration) && duration > RECOMMENDED_MAX_DURATION_SECONDS) {
         // Tam 20 dakika aşılmaz (yalnız > eşik); sıfır/güvenilir olmayan süre eşiğe girmez.
@@ -291,7 +345,14 @@ export class App {
         this.error.set(MSG_DURATION_LIMIT);
         return;
       }
-      this.commitSelection(file, result.container, result.warning, {
+      // Belirsizlik uyarısı, commitSelection'ın warning sinyalini ezmemeli.
+      const committedWarning =
+        trackResult === null
+          ? result.warning === null
+            ? MSG_WEBM_TRACK_UNCERTAIN
+            : `${result.warning} ${MSG_WEBM_TRACK_UNCERTAIN}`
+          : result.warning;
+      this.commitSelection(file, result.container, committedWarning, {
         wav: null,
         ogg: null,
         mp3: null,
